@@ -54,7 +54,7 @@ export default function SlotCard({ slot }: { slot: SlotCardData }) {
           </div>
           <div
             style={{
-              fontSize: "var(--size-sm)",
+              fontSize: "var(--size-small)",
               color: "var(--text-muted)",
               display: "flex",
               alignItems: "center",
@@ -91,7 +91,7 @@ export default function SlotCard({ slot }: { slot: SlotCardData }) {
         <span
           style={{
             flex: 1,
-            fontSize: "var(--size-sm)",
+            fontSize: "var(--size-small)",
             color: "var(--text-muted)",
             overflow: "hidden",
             textOverflow: "ellipsis",

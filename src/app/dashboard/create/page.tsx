@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Input, Select, EyebrowLabel } from "@/components/ui";
-import { createSlot } from "./actions";
+import { createSlotAction } from "./actions";
 
 // ── Time options every 30 min, 8:00 AM – 8:00 PM ──────────────────────────
 const TIME_OPTIONS: { value: string; label: string }[] = (() => {
@@ -124,7 +124,7 @@ export default function CreateSlotPage() {
 
     startTransition(async () => {
       try {
-        await createSlot(formData);
+        await createSlotAction(formData);
       } catch (err) {
         if (err instanceof Error && err.message !== "NEXT_REDIRECT") {
           setError(err.message);
@@ -194,7 +194,7 @@ export default function CreateSlotPage() {
         </h1>
         <p
           style={{
-            fontSize: "var(--size-sm)",
+            fontSize: "var(--size-small)",
             color: "var(--text-muted)",
             marginBottom: 28,
             lineHeight: 1.5,
@@ -323,7 +323,7 @@ export default function CreateSlotPage() {
           <p
             style={{
               color: "var(--danger)",
-              fontSize: "var(--size-sm)",
+              fontSize: "var(--size-small)",
               marginBottom: 16,
             }}
           >
