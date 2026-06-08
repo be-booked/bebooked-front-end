@@ -2,8 +2,11 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 import { getStylistByClerkId } from "@/lib/db/repositories/stylists";
 import { shortCodeExists, createSlot } from "@/lib/db/repositories/slots";
+import { createSlotSchema, firstZodError } from "@/lib/schemas";
+import { wrapDb } from "@/lib/errors";
 
 function generateShortCode(): string {
   return Math.random().toString(36).slice(2, 8);
@@ -13,37 +16,39 @@ export async function createSlotAction(formData: FormData) {
   const { userId } = await auth();
   if (!userId) throw new Error("Not authenticated");
 
-  const stylist = await getStylistByClerkId(userId);
+  const stylist = await wrapDb(() => getStylistByClerkId(userId));
   if (!stylist) throw new Error("No stylist profile found. Complete your profile first.");
 
-  const serviceName  = (formData.get("service_name") as string)?.trim();
-  const slotDate     = formData.get("slot_date") as string;   // "YYYY-MM-DD"
-  const slotTime     = formData.get("slot_time") as string;   // "HH:MM"
-  const durationMins = parseInt(formData.get("duration_mins") as string, 10);
-  const priceCents   = Math.round(parseFloat(formData.get("price") as string) * 100);
-  const note         = (formData.get("note") as string)?.trim() || null;
-
-  if (!serviceName || !slotDate || !slotTime || isNaN(durationMins) || isNaN(priceCents)) {
-    throw new Error("Missing required fields");
+  let data: z.infer<typeof createSlotSchema>;
+  try {
+    data = createSlotSchema.parse(Object.fromEntries(formData));
+  } catch (err) {
+    if (err instanceof z.ZodError) throw new Error(firstZodError(err));
+    throw err;
   }
+
+  const priceCents = Math.round(data.price * 100);
+  const note       = data.note?.trim() || null;
 
   // Generate a unique short code (retry on collision)
   let shortCode = generateShortCode();
   for (let i = 0; i < 5; i++) {
-    if (!(await shortCodeExists(shortCode))) break;
+    if (!(await wrapDb(() => shortCodeExists(shortCode)))) break;
     shortCode = generateShortCode();
   }
 
-  await createSlot({
-    stylistId: stylist.id,
-    serviceName,
-    durationMins,
-    priceCents,
-    slotDate,
-    slotTime,
-    shortCode,
-    note,
-  });
+  await wrapDb(() =>
+    createSlot({
+      stylistId:    stylist.id,
+      serviceName:  data.service_name,
+      durationMins: data.duration_mins,
+      priceCents,
+      slotDate:     data.slot_date,
+      slotTime:     data.slot_time,
+      shortCode,
+      note,
+    })
+  );
 
   redirect("/dashboard");
 }

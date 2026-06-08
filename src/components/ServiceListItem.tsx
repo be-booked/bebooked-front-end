@@ -13,7 +13,7 @@ interface ServiceListItemProps {
  */
 export function ServiceListItem({ name, subtitle, actions }: ServiceListItemProps) {
   return (
-    <Card variant="linen" padding="0" className="flex items-center gap-3 px-4 py-[14px]">
+    <Card variant="linen" padding="0" className="flex items-center gap-3 px-5 py-[18px]">
       <div
         className="size-8 rounded-[8px] bg-stone flex items-center justify-center shrink-0 text-sm"
         aria-hidden="true"

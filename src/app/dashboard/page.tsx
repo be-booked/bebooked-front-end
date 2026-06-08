@@ -5,7 +5,6 @@ import Wordmark from "@/components/Wordmark";
 import { Button, ButtonLink, EyebrowLabel } from "@/components/ui";
 import { PageHeader } from "@/components/PageHeader";
 import SlotCard, { type SlotCardData } from "./_components/SlotCard";
-import NavAvatar from "./_components/NavAvatar";
 import { formatSlotWhen, formatPrice } from "@/lib/format";
 import { getStylistByClerkId } from "@/lib/db/repositories/stylists";
 import { getOpenSlotsByStylistId } from "@/lib/db/repositories/slots";
@@ -55,7 +54,6 @@ export default async function DashboardPage() {
       {/* Header */}
       <PageHeader className="justify-between">
         <Wordmark size="sm" />
-        <NavAvatar name={stylistName} src={stylist?.photoUrl ?? undefined} size={34} />
       </PageHeader>
 
       {/* Body */}
@@ -85,17 +83,15 @@ export default async function DashboardPage() {
 
         {/* Action row */}
         <div className="flex gap-2.5 mb-6">
-          <Link href="/dashboard/create" className="flex-1 no-underline">
-            <Button variant="primary" fullWidth>+ Post a new slot</Button>
-          </Link>
+          <ButtonLink href="/dashboard/create" variant="primary" fullWidth>
+            + Create slot
+          </ButtonLink>
           <ButtonLink
-            href={stylist?.slug ? `https://bebookedtoday.com/${stylist.slug}` : "#"}
-            target={stylist?.slug ? "_blank" : undefined}
-            rel="noopener noreferrer"
+            href={stylist?.slug ? `/${stylist.slug}` : "#"}
             aria-label="View your public profile"
-            className="shrink-0"
+            fullWidth
           >
-            Share profile
+            Profile
           </ButtonLink>
         </div>
 

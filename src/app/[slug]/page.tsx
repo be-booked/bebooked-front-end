@@ -1,11 +1,15 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { Calendar } from "lucide-react";
 import { Avatar, EyebrowLabel, Card, Button } from "@/components/ui";
 import { PoweredBy } from "@/components/PoweredBy";
+import { ShareProfileButton } from "./_components/ShareProfileButton";
 import { formatSlotWhen, formatPrice } from "@/lib/format";
+import { auth } from "@clerk/nextjs/server";
 import { getStylistBySlug } from "@/lib/db/repositories/stylists";
 import { getOpenSlotsBySlug } from "@/lib/db/repositories/slots";
+import { APP_URL } from "@/lib/url";
 import { cn } from "@/lib/cn";
 
 interface PublicSlot {
@@ -38,8 +42,13 @@ export default async function PublicProfilePage({
 }) {
   const { slug } = await params;
 
-  const stylist = await getStylistBySlug(slug);
+  const [stylist, { userId }] = await Promise.all([
+    getStylistBySlug(slug),
+    auth(),
+  ]);
   if (!stylist) notFound();
+
+  const isOwner = !!userId && userId === stylist.clerkUserId;
 
   const slotRows = await getOpenSlotsBySlug(slug);
 
@@ -56,13 +65,29 @@ export default async function PublicProfilePage({
 
   return (
     <main className="min-h-screen bg-warm-cream">
+      {/* Owner-only: back to dashboard bar */}
+      {isOwner && (
+        <div className="bg-near-black text-warm-cream px-6 py-2.5 flex items-center justify-between text-sm">
+          <span className="text-warm-cream/60 text-xs tracking-wide uppercase font-semibold">Your public profile</span>
+          <Link href="/dashboard" className="text-warm-cream no-underline font-semibold text-xs flex items-center gap-1.5 hover:opacity-80 transition-opacity">
+            ← Dashboard
+          </Link>
+        </div>
+      )}
+
       {/* Profile hero */}
       <div className="bg-warm-cream border-b border-hairline px-6 pt-8 pb-6">
         <div className="max-w-[420px] mx-auto">
           <div className="flex items-start gap-4">
             <Avatar name={stylist.name} src={stylist.photoUrl ?? undefined} size={64} />
-            <div>
-              <h1 className="text-[22px] font-bold mb-1 leading-[1.2]">{stylist.name}</h1>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between gap-3 mb-1">
+                <h1 className="text-[22px] font-bold leading-[1.2]">{stylist.name}</h1>
+                <ShareProfileButton
+                  name={stylist.name}
+                  url={`${APP_URL}/${stylist.slug}`}
+                />
+              </div>
               {meta && <div className="text-sm text-muted">{meta}</div>}
               {stylist.bio && (
                 <p className="text-sm text-warm-gray mt-[10px] leading-relaxed max-w-[460px]">
@@ -117,7 +142,10 @@ function SlotCard({ slot }: { slot: PublicSlot }) {
       <div className="flex justify-between items-start mb-[14px]">
         <div>
           <div className="font-bold text-base mb-1">{slot.name}</div>
-          <div className="text-sm text-muted">{slot.when} · {slot.mins} min</div>
+          <div className="text-sm text-muted flex items-center gap-1.5">
+            <Calendar size={13} strokeWidth={2} className="shrink-0 text-muted" />
+            {slot.when} · {slot.mins} min
+          </div>
         </div>
         <div className="font-bold text-base">{slot.priceDisplay}</div>
       </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Button, Input, EyebrowLabel, Card, IconButton } from "@/components/ui";
+import { Button, Input, Card, IconButton } from "@/components/ui";
 import { ServiceListItem } from "@/components/ServiceListItem";
 import { AddServiceButton } from "@/components/AddServiceButton";
 import { addService, updateService, deleteService, type ServiceRow } from "../actions";
@@ -144,15 +144,7 @@ export default function ServicesSection({ initial }: { initial: ServiceRow[] }) 
   }
 
   return (
-    <section className="border-t border-hairline pt-8">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-4">
-        <EyebrowLabel className="block">Services</EyebrowLabel>
-        <span className="text-xs font-bold text-muted bg-stone rounded-full px-2 py-[2px]">
-          {services.length}
-        </span>
-      </div>
-
+    <div>
       {/* Service rows */}
       <div className="flex flex-col gap-2">
         {services.map((svc) => {
@@ -215,6 +207,6 @@ export default function ServicesSection({ initial }: { initial: ServiceRow[] }) 
       )}
 
       {error && <p className="text-sm text-danger mt-3">{error}</p>}
-    </section>
+    </div>
   );
 }

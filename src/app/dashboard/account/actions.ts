@@ -2,12 +2,15 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { getStylistByClerkId, slugTaken, updateStylist } from "@/lib/db/repositories/stylists";
 import {
   insertService,
   updateService as dbUpdateService,
   deleteService as dbDeleteService,
 } from "@/lib/db/repositories/services";
+import { profileSchema, serviceFormSchema, firstZodError } from "@/lib/schemas";
+import { wrapDb } from "@/lib/errors";
 
 function slugify(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -19,21 +22,29 @@ export async function updateProfile(formData: FormData) {
   const { userId } = await auth();
   if (!userId) throw new Error("Not authenticated");
 
-  const name   = (formData.get("name") as string)?.trim();
-  const rawSlug = (formData.get("slug") as string)?.trim();
-  const studio = (formData.get("studio") as string)?.trim() || null;
-  const bio    = (formData.get("bio") as string)?.trim() || null;
+  let data: z.infer<typeof profileSchema>;
+  try {
+    data = profileSchema.parse(Object.fromEntries(formData));
+  } catch (err) {
+    if (err instanceof z.ZodError) throw new Error(firstZodError(err));
+    throw err;
+  }
 
-  if (!name) throw new Error("Name is required");
-
-  const slug = slugify(rawSlug || name);
+  const slug = slugify(data.slug || data.name);
   if (!slug) throw new Error("Handle is required");
 
-  if (await slugTaken(slug, userId)) {
+  if (await wrapDb(() => slugTaken(slug, userId))) {
     throw new Error("That handle is already taken — try another");
   }
 
-  await updateStylist(userId, { name, slug, studio, bio });
+  await wrapDb(() =>
+    updateStylist(userId, {
+      name:   data.name,
+      slug,
+      studio: data.studio?.trim() || null,
+      bio:    data.bio?.trim() || null,
+    })
+  );
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/account");
@@ -52,16 +63,21 @@ export async function addService(formData: FormData): Promise<ServiceRow> {
   const { userId } = await auth();
   if (!userId) throw new Error("Not authenticated");
 
-  const stylist = await getStylistByClerkId(userId);
+  const stylist = await wrapDb(() => getStylistByClerkId(userId));
   if (!stylist) throw new Error("Stylist not found");
 
-  const name        = (formData.get("name") as string)?.trim();
-  const durationMins = parseInt(formData.get("mins") as string) || 60;
-  const priceCents  = Math.round((parseFloat(formData.get("price") as string) || 0) * 100);
+  let data: z.infer<typeof serviceFormSchema>;
+  try {
+    data = serviceFormSchema.parse(Object.fromEntries(formData));
+  } catch (err) {
+    if (err instanceof z.ZodError) throw new Error(firstZodError(err));
+    throw err;
+  }
 
-  if (!name) throw new Error("Service name is required");
-
-  const svc = await insertService(stylist.id, { name, durationMins, priceCents });
+  const priceCents = Math.round(data.price * 100);
+  const svc = await wrapDb(() =>
+    insertService(stylist.id, { name: data.name, durationMins: data.mins, priceCents })
+  );
 
   revalidatePath("/dashboard/account");
 
@@ -72,16 +88,21 @@ export async function updateService(serviceId: number, formData: FormData): Prom
   const { userId } = await auth();
   if (!userId) throw new Error("Not authenticated");
 
-  const stylist = await getStylistByClerkId(userId);
+  const stylist = await wrapDb(() => getStylistByClerkId(userId));
   if (!stylist) throw new Error("Stylist not found");
 
-  const name        = (formData.get("name") as string)?.trim();
-  const durationMins = parseInt(formData.get("mins") as string) || 60;
-  const priceCents  = Math.round((parseFloat(formData.get("price") as string) || 0) * 100);
+  let data: z.infer<typeof serviceFormSchema>;
+  try {
+    data = serviceFormSchema.parse(Object.fromEntries(formData));
+  } catch (err) {
+    if (err instanceof z.ZodError) throw new Error(firstZodError(err));
+    throw err;
+  }
 
-  if (!name) throw new Error("Service name is required");
-
-  await dbUpdateService(serviceId, stylist.id, { name, durationMins, priceCents });
+  const priceCents = Math.round(data.price * 100);
+  await wrapDb(() =>
+    dbUpdateService(serviceId, stylist.id, { name: data.name, durationMins: data.mins, priceCents })
+  );
 
   revalidatePath("/dashboard/account");
 }
@@ -90,10 +111,10 @@ export async function deleteService(serviceId: number): Promise<void> {
   const { userId } = await auth();
   if (!userId) throw new Error("Not authenticated");
 
-  const stylist = await getStylistByClerkId(userId);
+  const stylist = await wrapDb(() => getStylistByClerkId(userId));
   if (!stylist) throw new Error("Stylist not found");
 
-  await dbDeleteService(serviceId, stylist.id);
+  await wrapDb(() => dbDeleteService(serviceId, stylist.id));
 
   revalidatePath("/dashboard/account");
 }

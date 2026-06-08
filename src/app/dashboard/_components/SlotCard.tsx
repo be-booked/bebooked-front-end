@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { Share2 } from "lucide-react";
 import { Card, Button } from "@/components/ui";
 import { cn } from "@/lib/cn";
+import { APP_URL, APP_HOST } from "@/lib/url";
 
 export type SlotCardData = {
   id: number;
@@ -13,25 +15,35 @@ export type SlotCardData = {
   shortCode: string;
 };
 
-const BASE_URL = "bebookedtoday.com";
-
 export default function SlotCard({ slot }: { slot: SlotCardData }) {
-  const [copiedLink, setCopiedLink] = useState(false);
-  const [copiedStory, setCopiedStory] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  const bookingUrl = `${BASE_URL}/b/${slot.shortCode}`;
-  const fullUrl = `https://${bookingUrl}`;
+  const bookingUrl = `${APP_HOST}/b/${slot.shortCode}`;
+  const fullUrl    = `${APP_URL}/b/${slot.shortCode}`;
 
   function copyLink() {
     navigator.clipboard.writeText(fullUrl);
-    setCopiedLink(true);
-    setTimeout(() => setCopiedLink(false), 1400);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1400);
   }
 
-  function copyForStory() {
-    navigator.clipboard.writeText(fullUrl);
-    setCopiedStory(true);
-    setTimeout(() => setCopiedStory(false), 1400);
+  async function shareSlot() {
+    const shareData = {
+      title: `Book a ${slot.name}`,
+      text:  `I have an opening! Grab a ${slot.name} (${slot.mins} min · ${slot.priceDisplay}) — book it before it's gone.`,
+      url:   fullUrl,
+    };
+
+    if (typeof navigator.share === "function" && navigator.canShare?.(shareData)) {
+      try {
+        await navigator.share(shareData);
+      } catch {
+        // User cancelled — no-op
+      }
+    } else {
+      // Desktop fallback: copy to clipboard
+      copyLink();
+    }
   }
 
   return (
@@ -59,22 +71,23 @@ export default function SlotCard({ slot }: { slot: SlotCardData }) {
           className={cn(
             "shrink-0 text-warm-cream rounded-[8px] py-[5px] px-3 text-xs font-bold",
             "tracking-[0.04em] whitespace-nowrap transition-colors duration-[120ms] cursor-pointer border-none",
-            copiedLink ? "bg-sage" : "bg-near-black",
+            copied ? "bg-sage" : "bg-near-black",
           )}
         >
-          {copiedLink ? "Copied ✓" : "Copy"}
+          {copied ? "Copied ✓" : "Copy"}
         </button>
       </div>
 
-      {/* Action buttons */}
-      <div className="flex gap-2.5">
-        <Button variant="primary" size="sm" className="flex-1" onClick={copyLink}>
-          Share link
-        </Button>
-        <Button variant="secondary" size="sm" className="flex-1" onClick={copyForStory}>
-          {copiedStory ? "Copied!" : "To story"}
-        </Button>
-      </div>
+      {/* Share button */}
+      <Button
+        variant="primary"
+        size="sm"
+        className="w-full flex items-center justify-center gap-2"
+        onClick={shareSlot}
+      >
+        <Share2 size={15} strokeWidth={2.5} />
+        Share
+      </Button>
     </Card>
   );
 }
