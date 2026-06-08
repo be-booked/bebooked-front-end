@@ -9,7 +9,7 @@
     "lint": "eslint",
     "build:worker": "opennextjs-cloudflare build",
     "deploy": "opennextjs-cloudflare build && wrangler deploy",
-    "deploy:staging": "opennextjs-cloudflare build && wrangler deploy --env staging",
+    "deploy:dev": "opennextjs-cloudflare build && wrangler deploy --env dev",
     "preview": "opennextjs-cloudflare build && wrangler dev",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",

@@ -44,11 +44,11 @@
     "NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL": "/dashboard/setup"
   },
 
-  // Staging environment — deploys to bebooked-dev worker.
-  // Use staging Clerk app + Neon branch keys.
-  // Set staging secrets with: wrangler secret put <KEY> --env staging
+  // Dev environment — deploys to bebooked-dev worker.
+  // Use dev Clerk app + Neon branch keys.
+  // Set dev secrets with: wrangler secret put <KEY> --env dev
   "env": {
-    "staging": {
+    "dev": {
       "name": "bebooked-dev",
       "services": [
         {
