@@ -16,7 +16,6 @@ export default function NavAvatar({ name, src, size = 34 }: NavAvatarProps) {
   const { signOut } = useClerk();
   const ref = useRef<HTMLDivElement>(null);
 
-  // Close on outside click
   useEffect(() => {
     function handle(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) {
@@ -28,18 +27,10 @@ export default function NavAvatar({ name, src, size = 34 }: NavAvatarProps) {
   }, []);
 
   return (
-    <div ref={ref} style={{ position: "relative" }}>
+    <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
-        style={{
-          background: "none",
-          border: "none",
-          padding: 0,
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          borderRadius: "50%",
-        }}
+        className="bg-transparent border-none p-0 cursor-pointer flex items-center rounded-full"
         aria-label="Account menu"
         aria-expanded={open}
       >
@@ -49,35 +40,11 @@ export default function NavAvatar({ name, src, size = 34 }: NavAvatarProps) {
       {open && (
         <div
           role="menu"
-          style={{
-            position: "absolute",
-            top: size + 8,
-            right: 0,
-            background: "var(--warm-cream)",
-            border: "1px solid var(--stone)",
-            boxShadow: "var(--shadow-md)",
-            minWidth: 160,
-            zIndex: 100,
-          }}
+          className="absolute right-0 bg-warm-cream border border-stone shadow-[var(--shadow-md)] min-w-[160px] z-[100]"
+          style={{ top: size + 8 }}
         >
-          <div
-            style={{
-              padding: "10px 16px 8px",
-              borderBottom: "1px solid var(--hairline)",
-            }}
-          >
-            <p
-              style={{
-                fontSize: "12px",
-                fontWeight: "var(--weight-bold)",
-                color: "var(--text-primary)",
-                margin: 0,
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                maxWidth: 140,
-              }}
-            >
+          <div className="px-4 py-[10px] pb-2 border-b border-hairline">
+            <p className="text-xs font-bold text-near-black m-0 whitespace-nowrap overflow-hidden text-ellipsis max-w-[140px]">
               {name}
             </p>
           </div>
@@ -86,15 +53,7 @@ export default function NavAvatar({ name, src, size = 34 }: NavAvatarProps) {
             href="/dashboard/account"
             onClick={() => setOpen(false)}
             role="menuitem"
-            style={{
-              display: "block",
-              padding: "12px 16px",
-              fontSize: "14px",
-              color: "var(--text-primary)",
-              textDecoration: "none",
-              fontFamily: "var(--font-sans)",
-              borderBottom: "1px solid var(--hairline)",
-            }}
+            className="block px-4 py-3 text-sm text-near-black no-underline border-b border-hairline"
           >
             Account &amp; profile
           </Link>
@@ -102,19 +61,7 @@ export default function NavAvatar({ name, src, size = 34 }: NavAvatarProps) {
           <button
             role="menuitem"
             onClick={() => signOut({ redirectUrl: "/" })}
-            style={{
-              display: "block",
-              width: "100%",
-              textAlign: "left",
-              padding: "12px 16px",
-              fontSize: "14px",
-              color: "var(--danger)",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              fontFamily: "var(--font-sans)",
-              fontWeight: "var(--weight-medium)",
-            }}
+            className="block w-full text-left px-4 py-3 text-sm text-danger bg-transparent border-none cursor-pointer font-medium"
           >
             Sign out
           </button>

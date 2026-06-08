@@ -1,6 +1,5 @@
-"use client";
-
-import React, { useState } from "react";
+import React from "react";
+import { cn } from "@/lib/cn";
 
 interface SelectOption {
   value: string;
@@ -15,55 +14,28 @@ interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>
   children?: React.ReactNode;
 }
 
-export function Select({ label, hint, error, id, options, children, className = "", style, ...rest }: SelectProps) {
+export function Select({ label, hint, error, id, options, children, className, style, ...rest }: SelectProps) {
   const selId = id ?? (label ? `sel-${label.replace(/\s+/g, "-").toLowerCase()}` : undefined);
-  const [focused, setFocused] = useState(false);
-
-  const borderColor = error ? "var(--danger)" : focused ? "var(--border-strong)" : "var(--border-default)";
 
   return (
-    <div className={className} style={{ display: "flex", flexDirection: "column", gap: "7px", ...style }}>
+    <div className={cn("flex flex-col gap-[7px]", className)} style={style}>
       {label && (
         <label
           htmlFor={selId}
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontSize: "11px",
-            fontWeight: "var(--weight-medium)",
-            letterSpacing: "var(--tracking-wider)",
-            textTransform: "uppercase",
-            color: "var(--text-secondary)",
-          }}
+          className="text-[11px] font-medium tracking-[0.12em] uppercase text-warm-gray"
         >
           {label}
         </label>
       )}
       <div
-        style={{
-          position: "relative",
-          border: `var(--border-hairline) solid ${borderColor}`,
-          borderRadius: "var(--radius-none)",
-          transition: "border-color var(--dur-normal) var(--ease-standard)",
-        }}
+        className={cn(
+          "relative border transition-colors duration-200",
+          error ? "border-danger" : "border-stone focus-within:border-near-black",
+        )}
       >
         <select
           id={selId}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          style={{
-            appearance: "none",
-            WebkitAppearance: "none",
-            width: "100%",
-            border: "none",
-            outline: "none",
-            background: "transparent",
-            fontFamily: "var(--font-sans)",
-            fontSize: "16px",
-            fontWeight: "var(--weight-regular)",
-            color: "var(--text-primary)",
-            padding: "13px 40px 13px 14px",
-            cursor: "pointer",
-          }}
+          className="appearance-none w-full border-none outline-none bg-transparent text-base font-normal text-near-black py-[13px] pl-[14px] pr-10 cursor-pointer"
           {...rest}
         >
           {options
@@ -74,18 +46,9 @@ export function Select({ label, hint, error, id, options, children, className = 
               })
             : children}
         </select>
-        {/* Chevron affordance */}
         <span
           aria-hidden="true"
-          style={{
-            position: "absolute",
-            right: "14px",
-            top: "50%",
-            transform: "translateY(-50%)",
-            pointerEvents: "none",
-            color: "var(--text-secondary)",
-            display: "flex",
-          }}
+          className="absolute right-[14px] top-1/2 -translate-y-1/2 pointer-events-none text-warm-gray flex"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
             <path d="m6 9 6 6 6-6" />
@@ -93,7 +56,7 @@ export function Select({ label, hint, error, id, options, children, className = 
         </span>
       </div>
       {(hint || error) && (
-        <span style={{ fontFamily: "var(--font-sans)", fontSize: "12px", color: error ? "var(--danger)" : "var(--text-muted)" }}>
+        <span className={cn("text-xs", error ? "text-danger" : "text-muted")}>
           {error || hint}
         </span>
       )}

@@ -2,85 +2,14 @@
 
 import { useState, useTransition } from "react";
 import { Button, Input, Textarea, EyebrowLabel, Card, IconButton } from "@/components/ui";
+import { PageHeader } from "@/components/PageHeader";
+import { ServiceListItem } from "@/components/ServiceListItem";
+import { AddServiceButton } from "@/components/AddServiceButton";
 import { saveSetup, type ServiceDraft } from "./actions";
-
-// ── Service row ────────────────────────────────────────────────────────────
-
-function ServiceRow({
-  svc,
-  onRemove,
-}: {
-  svc: ServiceDraft & { id: number };
-  onRemove: () => void;
-}) {
-  return (
-    <Card
-      variant="linen"
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        padding: "14px 16px",
-      }}
-    >
-      <div
-        style={{
-          width: 32,
-          height: 32,
-          borderRadius: "var(--radius-sm)",
-          background: "var(--stone)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
-          fontSize: 14,
-        }}
-        aria-hidden="true"
-      >
-        ✂️
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            fontWeight: "var(--weight-bold)",
-            fontSize: "var(--size-small)",
-            color: "var(--text-primary)",
-            marginBottom: 2,
-          }}
-        >
-          {svc.name}
-        </div>
-        <div
-          style={{
-            fontSize: "var(--size-caption)",
-            color: "var(--text-muted)",
-          }}
-        >
-          {svc.mins} min · ${svc.price}
-        </div>
-      </div>
-      <IconButton
-        label="Remove service"
-        size="sm"
-        variant="ghost"
-        onClick={onRemove}
-        style={{ flexShrink: 0 }}
-      >
-        ×
-      </IconButton>
-    </Card>
-  );
-}
 
 // ── Add service inline form ────────────────────────────────────────────────
 
-function AddServiceForm({
-  onAdd,
-  onCancel,
-}: {
-  onAdd: (svc: ServiceDraft) => void;
-  onCancel: () => void;
-}) {
+function AddServiceForm({ onAdd, onCancel }: { onAdd: (svc: ServiceDraft) => void; onCancel: () => void }) {
   const [draft, setDraft] = useState({ name: "", mins: "", price: "" });
 
   function submit() {
@@ -93,16 +22,7 @@ function AddServiceForm({
   }
 
   return (
-    <Card
-      variant="outline"
-      style={{
-        padding: "16px",
-        display: "flex",
-        flexDirection: "column",
-        gap: 12,
-        marginTop: 8,
-      }}
-    >
+    <Card variant="outline" padding="16px" className="flex flex-col gap-3 mt-2">
       <Input
         label="Service name"
         placeholder="e.g. Balayage"
@@ -112,7 +32,7 @@ function AddServiceForm({
         // eslint-disable-next-line jsx-a11y/no-autofocus
         autoFocus
       />
-      <div style={{ display: "flex", gap: 12 }}>
+      <div className="flex gap-3">
         <Input
           label="Minutes"
           type="number"
@@ -121,7 +41,7 @@ function AddServiceForm({
           step={15}
           value={draft.mins}
           onChange={(e) => setDraft({ ...draft, mins: e.target.value })}
-          style={{ flex: 1 }}
+          className="flex-1"
         />
         <Input
           label="Price"
@@ -132,16 +52,12 @@ function AddServiceForm({
           prefix="$"
           value={draft.price}
           onChange={(e) => setDraft({ ...draft, price: e.target.value })}
-          style={{ flex: 1 }}
+          className="flex-1"
         />
       </div>
-      <div style={{ display: "flex", gap: 10 }}>
-        <Button variant="ghost" size="sm" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button variant="primary" size="sm" style={{ flex: 1 }} onClick={submit}>
-          Add service
-        </Button>
+      <div className="flex gap-2.5">
+        <Button variant="ghost" size="sm" onClick={onCancel}>Cancel</Button>
+        <Button variant="primary" size="sm" className="flex-1" onClick={submit}>Add service</Button>
       </div>
     </Card>
   );
@@ -176,7 +92,6 @@ export default function SetupPage() {
     e.preventDefault();
     setError(null);
     const formData = new FormData(e.currentTarget);
-    // Pass bio via formData (textarea value not auto-captured with state)
     formData.set("bio", bio);
 
     startTransition(async () => {
@@ -191,144 +106,45 @@ export default function SetupPage() {
   }
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "var(--warm-cream)",
-        fontFamily: "var(--font-sans)",
-      }}
-    >
+    <main className="min-h-screen bg-warm-cream">
       {/* Step header */}
-      <header
-        style={{
-          borderBottom: "1px solid var(--hairline)",
-          padding: "14px var(--gutter)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
+      <PageHeader className="justify-center">
         <EyebrowLabel tone="muted">Step 1 of 2</EyebrowLabel>
-      </header>
+      </PageHeader>
 
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          maxWidth: "var(--app-max)",
-          margin: "0 auto",
-          padding: "28px var(--gutter) 100px",
-        }}
-      >
-        <h1
-          style={{
-            fontSize: "var(--size-title)",
-            fontWeight: "var(--weight-bold)",
-            color: "var(--text-primary)",
-            marginBottom: 6,
-            lineHeight: "var(--leading-snug)",
-          }}
-        >
-          Set up your profile
-        </h1>
-        <p
-          style={{
-            fontSize: "var(--size-small)",
-            color: "var(--text-muted)",
-            marginBottom: 28,
-            lineHeight: "var(--leading-relaxed)",
-          }}
-        >
+      <form onSubmit={handleSubmit} className="max-w-[420px] mx-auto px-6 pt-7 pb-[100px]">
+        <h1 className="text-[28px] font-bold leading-snug mb-1.5">Set up your profile</h1>
+        <p className="text-sm text-muted mb-7 leading-relaxed">
           This is what clients see on your booking link.
         </p>
 
         {/* Photo upload placeholder */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 16,
-            marginBottom: 28,
-          }}
-        >
-          <div style={{ position: "relative", cursor: "pointer" }}>
+        <div className="flex items-center gap-4 mb-7">
+          <div className="relative cursor-pointer">
             <div
-              style={{
-                width: 64,
-                height: 64,
-                borderRadius: "var(--radius-pill)",
-                background: "var(--stone)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 24,
-              }}
+              className="size-16 rounded-full bg-stone flex items-center justify-center text-2xl"
               aria-hidden="true"
             >
               👤
             </div>
             <div
-              style={{
-                position: "absolute",
-                bottom: 0,
-                right: 0,
-                width: 22,
-                height: 22,
-                borderRadius: "var(--radius-pill)",
-                background: "var(--near-black)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 11,
-                color: "var(--warm-cream)",
-              }}
+              className="absolute bottom-0 right-0 size-[22px] rounded-full bg-near-black flex items-center justify-center text-[11px] text-warm-cream"
               aria-hidden="true"
             >
               +
             </div>
           </div>
           <div>
-            <div
-              style={{
-                fontWeight: "var(--weight-bold)",
-                fontSize: "var(--size-small)",
-                color: "var(--text-primary)",
-                marginBottom: 2,
-              }}
-            >
-              Add a photo
-            </div>
-            <div
-              style={{
-                fontSize: "var(--size-caption)",
-                color: "var(--text-muted)",
-              }}
-            >
-              Helps clients recognise you
-            </div>
+            <div className="font-bold text-sm text-near-black mb-0.5">Add a photo</div>
+            <div className="text-xs text-muted">Helps clients recognise you</div>
           </div>
         </div>
 
         {/* Profile fields */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 28 }}>
-          <Input
-            label="Your name"
-            name="name"
-            placeholder="e.g. Jordan Avery"
-            required
-            autoComplete="name"
-          />
-          <Input
-            label="Studio / business"
-            name="studio"
-            placeholder="e.g. Avery Hair Co."
-            autoComplete="organization"
-          />
-          <Input
-            label="Location"
-            name="location"
-            defaultValue="Charlotte, NC"
-            placeholder="City, State"
-          />
+        <div className="flex flex-col gap-4 mb-7">
+          <Input label="Your name" name="name" placeholder="e.g. Jordan Avery" required autoComplete="name" />
+          <Input label="Studio / business" name="studio" placeholder="e.g. Avery Hair Co." autoComplete="organization" />
+          <Input label="Location" name="location" defaultValue="Charlotte, NC" placeholder="City, State" />
           <div>
             <Textarea
               label="Bio"
@@ -339,119 +155,45 @@ export default function SetupPage() {
               placeholder="A short line about you and your work"
               rows={3}
             />
-            <div
-              style={{
-                textAlign: "right",
-                fontSize: "11px",
-                color: "var(--text-muted)",
-                marginTop: 4,
-              }}
-            >
-              {bio.length}/250
-            </div>
+            <div className="text-right text-[11px] text-muted mt-1">{bio.length}/250</div>
           </div>
         </div>
 
         {/* Services */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 12,
-          }}
-        >
+        <div className="flex justify-between items-center mb-3">
           <EyebrowLabel>Your services</EyebrowLabel>
-          <span
-            style={{
-              fontSize: "var(--size-caption)",
-              fontWeight: "var(--weight-bold)",
-              color: "var(--text-muted)",
-              background: "var(--stone)",
-              borderRadius: "var(--radius-pill)",
-              padding: "2px 8px",
-            }}
-          >
+          <span className="text-xs font-bold text-muted bg-stone rounded-full px-2 py-[2px]">
             {services.length}
           </span>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div className="flex flex-col gap-2">
           {services.map((s) => (
-            <ServiceRow key={s.id} svc={s} onRemove={() => removeService(s.id)} />
+            <ServiceListItem
+              key={s.id}
+              name={s.name}
+              subtitle={`${s.mins} min · $${s.price}`}
+              actions={
+                <IconButton label="Remove service" size="sm" variant="ghost" onClick={() => removeService(s.id)}>
+                  ×
+                </IconButton>
+              }
+            />
           ))}
         </div>
 
         {adding ? (
           <AddServiceForm onAdd={addService} onCancel={() => setAdding(false)} />
         ) : (
-          <button
-            type="button"
-            onClick={() => setAdding(true)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              marginTop: 10,
-              padding: "10px 0",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              fontFamily: "var(--font-sans)",
-              fontSize: "var(--size-small)",
-              fontWeight: "var(--weight-medium)",
-              color: "var(--text-secondary)",
-            }}
-          >
-            <span
-              style={{
-                width: 20,
-                height: 20,
-                border: "1.5px solid var(--stone)",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 14,
-              }}
-            >
-              +
-            </span>
-            Add a service
-          </button>
+          <AddServiceButton onClick={() => setAdding(true)} />
         )}
 
-        {error && (
-          <p
-            style={{
-              fontSize: "var(--size-small)",
-              color: "var(--danger)",
-              marginTop: 16,
-            }}
-          >
-            {error}
-          </p>
-        )}
+        {error && <p className="text-sm text-danger mt-4">{error}</p>}
 
         {/* Sticky footer CTA */}
-        <div
-          style={{
-            position: "fixed",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            background: "var(--warm-cream)",
-            borderTop: "1px solid var(--hairline)",
-            padding: "16px var(--gutter)",
-          }}
-        >
-          <div style={{ maxWidth: "var(--app-max)", margin: "0 auto" }}>
-            <Button
-              type="submit"
-              variant="primary"
-              size="lg"
-              style={{ width: "100%" }}
-              disabled={isPending}
-            >
+        <div className="fixed bottom-0 left-0 right-0 bg-warm-cream border-t border-hairline px-6 py-4">
+          <div className="max-w-[420px] mx-auto">
+            <Button type="submit" variant="primary" size="lg" fullWidth disabled={isPending}>
               {isPending ? "Saving…" : "Save & continue"}
             </Button>
           </div>

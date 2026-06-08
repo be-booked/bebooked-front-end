@@ -1,0 +1,67 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "main": ".open-next/worker.js",
+  "name": "bebooked",
+  "compatibility_date": "2026-06-07",
+  "compatibility_flags": ["nodejs_compat"],
+
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "bebooked"
+    }
+  ],
+  "images": {
+    "binding": "IMAGES"
+  },
+  "observability": {
+    "enabled": true
+  },
+
+  // TODO: Uncomment and add this block once the R2 bucket is created:
+  //   wrangler r2 bucket create bebooked-cache
+  // "r2_buckets": [
+  //   {
+  //     "binding": "NEXT_INC_CACHE_R2_BUCKET",
+  //     "bucket_name": "bebooked-cache"
+  //   }
+  // ],
+
+  // Public (non-secret) env vars shared across environments.
+  // Set secrets separately — they are NOT stored here:
+  //   wrangler secret put DATABASE_URL
+  //   wrangler secret put CLERK_SECRET_KEY
+  //   wrangler secret put NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+  //   wrangler secret put RESEND_API_KEY
+  "vars": {
+    "NEXT_PUBLIC_CLERK_SIGN_IN_URL": "/sign-in",
+    "NEXT_PUBLIC_CLERK_SIGN_UP_URL": "/sign-up",
+    "NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL": "/dashboard",
+    "NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL": "/dashboard/setup"
+  },
+
+  // Staging environment — deploys to bebooked-dev worker.
+  // Use staging Clerk app + Neon branch keys.
+  // Set staging secrets with: wrangler secret put <KEY> --env staging
+  "env": {
+    "staging": {
+      "name": "bebooked-dev",
+      "services": [
+        {
+          "binding": "WORKER_SELF_REFERENCE",
+          "service": "bebooked-dev"
+        }
+      ],
+      "vars": {
+        "NEXT_PUBLIC_CLERK_SIGN_IN_URL": "/sign-in",
+        "NEXT_PUBLIC_CLERK_SIGN_UP_URL": "/sign-up",
+        "NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL": "/dashboard",
+        "NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL": "/dashboard/setup"
+      }
+    }
+  }
+}

@@ -2,20 +2,19 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import Wordmark from "@/components/Wordmark";
-import { Button, EyebrowLabel } from "@/components/ui";
+import { Button, ButtonLink, EyebrowLabel } from "@/components/ui";
+import { PageHeader } from "@/components/PageHeader";
 import SlotCard, { type SlotCardData } from "./_components/SlotCard";
 import NavAvatar from "./_components/NavAvatar";
 import { formatSlotWhen, formatPrice } from "@/lib/format";
 import { getStylistByClerkId } from "@/lib/db/repositories/stylists";
 import { getOpenSlotsByStylistId } from "@/lib/db/repositories/slots";
-
-// ── Page ───────────────────────────────────────────────────────────────────
+import { cn } from "@/lib/cn";
 
 export default async function DashboardPage() {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
 
-  // ── Fetch stylist record — redirect to setup if none exists ───────────────
   let stylist: Awaited<ReturnType<typeof getStylistByClerkId>>;
   let dbError = false;
 
@@ -29,7 +28,6 @@ export default async function DashboardPage() {
     redirect("/dashboard/setup");
   }
 
-  // ── Fetch open slots ──────────────────────────────────────────────────────
   let slots: SlotCardData[] = [];
   let slotsError: string | null = null;
 
@@ -53,85 +51,30 @@ export default async function DashboardPage() {
   const stylistName = stylist?.name ?? "there";
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "var(--warm-cream)",
-        fontFamily: "var(--font-sans)",
-      }}
-    >
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <header
-        style={{
-          background: "var(--warm-cream)",
-          borderBottom: "1px solid var(--hairline)",
-          padding: "14px var(--gutter)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
+    <main className="min-h-screen bg-warm-cream">
+      {/* Header */}
+      <PageHeader className="justify-between">
         <Wordmark size="sm" />
-        <NavAvatar
-          name={stylistName}
-          src={stylist?.photoUrl ?? undefined}
-          size={34}
-        />
-      </header>
+        <NavAvatar name={stylistName} src={stylist?.photoUrl ?? undefined} size={34} />
+      </PageHeader>
 
-      {/* ── Body ───────────────────────────────────────────────────────────── */}
-      <div
-        style={{
-          maxWidth: 680,
-          margin: "0 auto",
-          padding: "24px var(--gutter) 64px",
-        }}
-      >
+      {/* Body */}
+      <div className="max-w-[680px] mx-auto px-6 pt-6 pb-16">
         {/* Title row */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-end",
-            marginBottom: 4,
-          }}
-        >
-          <h1
-            style={{
-              fontSize: "28px",
-              fontWeight: "var(--weight-bold)",
-              color: "var(--text-primary)",
-              lineHeight: 1.1,
-              margin: 0,
-            }}
-          >
-            My slots
-          </h1>
-          <EyebrowLabel tone="muted" style={{ marginBottom: 4 }}>
+        <div className="flex justify-between items-end mb-1">
+          <h1 className="text-[28px] font-bold leading-[1.1] m-0">My slots</h1>
+          <EyebrowLabel tone="muted" className="mb-1">
             {stylist?.location ?? ""}
           </EyebrowLabel>
         </div>
 
-        {/* Subtitle / status */}
-        <p
-          style={{
-            fontSize: "var(--size-small)",
-            color: "var(--text-muted)",
-            marginBottom: 20,
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-          }}
-        >
+        {/* Subtitle */}
+        <p className="text-sm text-muted mb-5 flex items-center gap-1.5">
           <span
-            style={{
-              display: "inline-block",
-              width: 8,
-              height: 8,
-              borderRadius: "50%",
-              background: slots.length > 0 ? "var(--sage)" : "var(--stone)",
-              flexShrink: 0,
-            }}
+            className={cn(
+              "inline-block size-2 rounded-full shrink-0",
+              slots.length > 0 ? "bg-sage" : "bg-stone",
+            )}
           />
           {dbError
             ? "Database not connected yet"
@@ -141,38 +84,30 @@ export default async function DashboardPage() {
         </p>
 
         {/* Action row */}
-        <div style={{ display: "flex", gap: 10, marginBottom: 24 }}>
-          <Link href="/dashboard/create" style={{ flex: 1, textDecoration: "none" }}>
-            <Button variant="primary" style={{ width: "100%" }}>
-              + Post a new slot
-            </Button>
+        <div className="flex gap-2.5 mb-6">
+          <Link href="/dashboard/create" className="flex-1 no-underline">
+            <Button variant="primary" fullWidth>+ Post a new slot</Button>
           </Link>
-          <ShareProfileButton slug={stylist?.slug} />
+          <ButtonLink
+            href={stylist?.slug ? `https://bebookedtoday.com/${stylist.slug}` : "#"}
+            target={stylist?.slug ? "_blank" : undefined}
+            rel="noopener noreferrer"
+            aria-label="View your public profile"
+            className="shrink-0"
+          >
+            Share profile
+          </ButtonLink>
         </div>
 
-        {/* Slot list / empty state */}
+        {/* Slot list / empty */}
         {slotsError && (
-          <p
-            style={{
-              fontSize: "var(--size-small)",
-              color: "var(--danger)",
-              background: "rgba(164,70,47,0.08)",
-              border: "1px solid rgba(164,70,47,0.25)",
-              padding: "12px 16px",
-              marginBottom: 16,
-              lineHeight: 1.5,
-            }}
-          >
+          <p className="text-sm text-danger bg-danger/8 border border-danger/25 px-4 py-3 mb-4 leading-relaxed">
             <strong>Slots query error:</strong> {slotsError}
           </p>
         )}
         {slots.length === 0 && !slotsError && <EmptyState dbError={dbError} />}
         {slots.length > 0 && (
-          <div
-            style={{ display: "flex", flexDirection: "column", gap: 12 }}
-            role="list"
-            aria-label="Your open slots"
-          >
+          <div className="flex flex-col gap-3" role="list" aria-label="Your open slots">
             {slots.map((s) => (
               <div key={s.id} role="listitem">
                 <SlotCard slot={s} />
@@ -185,127 +120,37 @@ export default async function DashboardPage() {
   );
 }
 
-// ── Share profile button ───────────────────────────────────────────────────
-
-function ShareProfileButton({ slug }: { slug?: string }) {
-  const href = slug ? `https://bebookedtoday.com/${slug}` : "#";
-  return (
-    <a
-      href={href}
-      target={slug ? "_blank" : undefined}
-      rel="noopener noreferrer"
-      aria-label="View your public profile"
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "13px 24px",
-        fontFamily: "var(--font-sans)",
-        fontSize: "15px",
-        fontWeight: "var(--weight-bold)",
-        letterSpacing: "0.04em",
-        lineHeight: 1,
-        whiteSpace: "nowrap",
-        border: "1.5px solid var(--border-default)",
-        background: "transparent",
-        color: "var(--text-primary)",
-        textDecoration: "none",
-        flexShrink: 0,
-      }}
-    >
-      Share profile
-    </a>
-  );
-}
-
-// ── Empty / error states ───────────────────────────────────────────────────
+// ── Empty states ───────────────────────────────────────────────────────────
 
 function EmptyState({ dbError }: { dbError: boolean }) {
   if (dbError) {
     return (
-      <div
-        style={{
-          textAlign: "center",
-          padding: "48px 24px",
-          color: "var(--text-muted)",
-        }}
-      >
-        <p
-          style={{
-            fontSize: "var(--size-small)",
-            lineHeight: 1.6,
-            maxWidth: 320,
-            margin: "0 auto",
-          }}
-        >
+      <div className="text-center px-6 py-12 text-muted">
+        <p className="text-sm leading-relaxed max-w-[320px] mx-auto">
           Database isn&apos;t connected yet. Add your{" "}
-          <code
-            style={{
-              fontFamily: "monospace",
-              background: "var(--warm-linen)",
-              padding: "1px 5px",
-              borderRadius: 2,
-            }}
-          >
+          <code className="font-mono bg-warm-linen px-[5px] py-[1px] rounded-[2px]">
             DATABASE_URL
           </code>{" "}
-          to{" "}
-          <code style={{ fontFamily: "monospace" }}>.env.local</code> and run
-          the setup SQL in Neon.
+          to <code className="font-mono">.env.local</code> and run the setup SQL in Neon.
         </p>
       </div>
     );
   }
 
   return (
-    <div
-      style={{
-        textAlign: "center",
-        padding: "56px 24px",
-        color: "var(--text-muted)",
-      }}
-    >
+    <div className="text-center px-6 py-14 text-muted">
       <div
-        style={{
-          width: 56,
-          height: 56,
-          borderRadius: "var(--radius-md)",
-          background: "var(--stone)",
-          margin: "0 auto 20px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: 22,
-        }}
+        className="size-14 rounded-[12px] bg-stone mx-auto mb-5 flex items-center justify-center text-[22px]"
         aria-hidden="true"
       >
         ✂️
       </div>
-      <p
-        style={{
-          fontWeight: "var(--weight-bold)",
-          fontSize: "var(--size-body)",
-          color: "var(--text-primary)",
-          margin: "0 0 8px",
-        }}
-      >
-        No open slots yet
-      </p>
-      <p
-        style={{
-          fontSize: "var(--size-small)",
-          color: "var(--text-muted)",
-          lineHeight: 1.6,
-          maxWidth: 280,
-          margin: "0 auto 24px",
-        }}
-      >
+      <p className="font-bold text-base text-near-black m-0 mb-2">No open slots yet</p>
+      <p className="text-sm text-muted leading-relaxed max-w-[280px] mx-auto mb-6">
         Post your first opening and share the link to get booked in minutes.
       </p>
-      <Link href="/dashboard/create" style={{ textDecoration: "none" }}>
-        <Button variant="accent" size="sm">
-          Post your first slot
-        </Button>
+      <Link href="/dashboard/create" className="no-underline">
+        <Button variant="accent" size="sm">Post your first slot</Button>
       </Link>
     </div>
   );

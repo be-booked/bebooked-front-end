@@ -38,22 +38,13 @@ export default function ProfileForm({ name, slug, studio, bio }: ProfileFormProp
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 40 }}>
-      {/* ── Profile section ─────────────────────────────────────────────── */}
+    <div className="flex flex-col gap-10">
+      {/* Profile section */}
       <section>
-        <EyebrowLabel style={{ display: "block", marginBottom: 20 }}>
-          Profile
-        </EyebrowLabel>
+        <EyebrowLabel className="block mb-5">Profile</EyebrowLabel>
 
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-          <Input
-            label="Name"
-            name="name"
-            defaultValue={name}
-            required
-            placeholder="Your full name"
-          />
-
+        <form onSubmit={handleSubmit} className="flex flex-col gap-[18px]">
+          <Input label="Name" name="name" defaultValue={name} required placeholder="Your full name" />
           <Input
             label="Handle"
             name="slug"
@@ -63,14 +54,7 @@ export default function ProfileForm({ name, slug, studio, bio }: ProfileFormProp
             prefix="bebookedtoday.com/"
             hint="Lowercase letters, numbers, and hyphens only. This is your public profile URL."
           />
-
-          <Input
-            label="Studio / salon name"
-            name="studio"
-            defaultValue={studio ?? ""}
-            placeholder="e.g. Studio 7"
-          />
-
+          <Input label="Studio / salon name" name="studio" defaultValue={studio ?? ""} placeholder="e.g. Studio 7" />
           <Textarea
             label="Bio"
             id="bio"
@@ -81,49 +65,24 @@ export default function ProfileForm({ name, slug, studio, bio }: ProfileFormProp
             maxLength={250}
           />
 
-          {error && (
-            <p style={{ fontSize: "var(--size-small)", color: "var(--danger)", margin: 0 }}>
-              {error}
-            </p>
-          )}
+          {error && <p className="text-sm text-danger m-0">{error}</p>}
 
-          <Button
-            type="submit"
-            variant="primary"
-            disabled={isPending}
-            style={{ alignSelf: "flex-start" }}
-          >
+          <Button type="submit" variant="primary" disabled={isPending} className="self-start">
             {isPending ? "Saving…" : saved ? "Saved ✓" : "Save changes"}
           </Button>
         </form>
       </section>
 
-      {/* ── Account section ─────────────────────────────────────────────── */}
-      <section
-        style={{
-          borderTop: "1px solid var(--hairline)",
-          paddingTop: 32,
-        }}
-      >
-        <EyebrowLabel style={{ display: "block", marginBottom: 20 }}>
-          Account
-        </EyebrowLabel>
-
-        <p
-          style={{
-            fontSize: "var(--size-small)",
-            color: "var(--text-muted)",
-            marginBottom: 16,
-            lineHeight: 1.5,
-          }}
-        >
+      {/* Account section */}
+      <section className="border-t border-hairline pt-8">
+        <EyebrowLabel className="block mb-5">Account</EyebrowLabel>
+        <p className="text-sm text-muted mb-4 leading-relaxed">
           Signing out will end your current session.
         </p>
-
         <Button
           variant="secondary"
           onClick={() => signOut({ redirectUrl: "/" })}
-          style={{ borderColor: "var(--danger)", color: "var(--danger)" }}
+          className="border-danger text-danger"
         >
           Sign out
         </Button>

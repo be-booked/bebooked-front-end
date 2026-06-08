@@ -143,21 +143,35 @@
 }
 
 @theme inline {
-  --color-near-black:  var(--near-black);
-  --color-warm-cream:  var(--warm-cream);
-  --color-warm-linen:  var(--warm-linen);
-  --color-stone:       var(--stone);
-  --color-brand-stone: var(--stone);
-  --color-muted:       var(--muted);
-  --color-sage:        var(--sage);
-  --color-accent:      var(--sage);
-  --color-sage-deep:   var(--sage-deep);
-  --color-sage-soft:   var(--sage-soft);
-  --color-warm-gray:   var(--warm-gray);
-  --color-linen-deep:  var(--linen-deep);
-  --color-danger:      var(--danger);
-  --color-danger-soft: var(--danger-soft);
+  /* ── Colors ── */
+  --color-near-black:    var(--near-black);
+  --color-warm-cream:    var(--warm-cream);
+  --color-warm-linen:    var(--warm-linen);
+  --color-stone:         var(--stone);
+  --color-brand-stone:   var(--stone);
+  --color-muted:         var(--muted);
+  --color-sage:          var(--sage);
+  --color-accent:        var(--sage);
+  --color-sage-deep:     var(--sage-deep);
+  --color-sage-soft:     var(--sage-soft);
+  --color-warm-gray:     var(--warm-gray);
+  --color-linen-deep:    var(--linen-deep);
+  --color-cream-raised:  var(--cream-raised);
+  --color-near-black-80: var(--near-black-80);
+  --color-hairline:      var(--hairline);
+  --color-danger:        var(--danger);
+  --color-danger-soft:   var(--danger-soft);
+  --color-success:       var(--success);
+  --color-success-soft:  var(--success-soft);
 
+  /* ── Border widths ── */
+  --border-width-regular: var(--border-regular); /* → border-regular (1.5px) */
+
+  /* ── Shadows (prefixed; shadow-md/lg would override Tailwind's own scale) ── */
+  --shadow-card:  var(--shadow-md); /* → shadow-card */
+  --shadow-hover: var(--shadow-lg); /* → shadow-hover */
+
+  /* ── Typography ── */
   --font-sans: var(--font-jost);
 }
 

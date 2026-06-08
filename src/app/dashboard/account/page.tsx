@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import Wordmark from "@/components/Wordmark";
+import { PageHeader } from "@/components/PageHeader";
 import ProfileForm from "./_components/ProfileForm";
 import ServicesSection from "./_components/ServicesSection";
 import { type ServiceRow } from "./actions";
@@ -17,7 +18,6 @@ export default async function AccountPage() {
 
   try {
     stylist = await getStylistByClerkId(userId);
-
     if (stylist) {
       const rows = await getServicesByStylistId(stylist.id);
       services = rows.map((r) => ({
@@ -32,65 +32,19 @@ export default async function AccountPage() {
   }
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "var(--warm-cream)",
-        fontFamily: "var(--font-sans)",
-      }}
-    >
+    <main className="min-h-screen bg-warm-cream">
       {/* Header */}
-      <header
-        style={{
-          background: "var(--warm-cream)",
-          borderBottom: "1px solid var(--hairline)",
-          padding: "14px var(--gutter)",
-          display: "flex",
-          alignItems: "center",
-          gap: 16,
-        }}
-      >
-        <Link
-          href="/dashboard"
-          style={{
-            color: "var(--text-primary)",
-            textDecoration: "none",
-            fontSize: "20px",
-            lineHeight: 1,
-          }}
-          aria-label="Back to dashboard"
-        >
+      <PageHeader className="gap-4">
+        <Link href="/dashboard" className="text-near-black no-underline text-xl leading-none" aria-label="Back to dashboard">
           ←
         </Link>
         <Wordmark size="sm" />
-      </header>
+      </PageHeader>
 
       {/* Body */}
-      <div
-        style={{
-          maxWidth: 540,
-          margin: "0 auto",
-          padding: "28px var(--gutter) 80px",
-        }}
-      >
-        <h1
-          style={{
-            fontSize: "24px",
-            fontWeight: "var(--weight-bold)",
-            color: "var(--text-primary)",
-            marginBottom: 6,
-          }}
-        >
-          Account &amp; profile
-        </h1>
-        <p
-          style={{
-            fontSize: "var(--size-small)",
-            color: "var(--text-muted)",
-            marginBottom: 32,
-            lineHeight: 1.5,
-          }}
-        >
+      <div className="max-w-[540px] mx-auto px-6 pt-7 pb-20">
+        <h1 className="text-2xl font-bold mb-1.5">Account &amp; profile</h1>
+        <p className="text-sm text-muted mb-8 leading-relaxed">
           Your profile is what clients see when they visit your booking page.
         </p>
 

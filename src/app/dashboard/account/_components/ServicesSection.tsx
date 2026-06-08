@@ -2,91 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { Button, Input, EyebrowLabel, Card, IconButton } from "@/components/ui";
+import { ServiceListItem } from "@/components/ServiceListItem";
+import { AddServiceButton } from "@/components/AddServiceButton";
 import { addService, updateService, deleteService, type ServiceRow } from "../actions";
-
-// ── Service view row ────────────────────────────────────────────────────────
-
-function ServiceViewRow({
-  svc,
-  isPending,
-  onEdit,
-  onDelete,
-}: {
-  svc: ServiceRow;
-  isPending: boolean;
-  onEdit: () => void;
-  onDelete: () => void;
-}) {
-  const priceDisplay = `$${(svc.priceCents / 100).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
-
-  return (
-    <Card
-      variant="linen"
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        padding: "14px 16px",
-      }}
-    >
-      <div
-        style={{
-          width: 32,
-          height: 32,
-          borderRadius: "var(--radius-sm)",
-          background: "var(--stone)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
-          fontSize: 14,
-        }}
-        aria-hidden="true"
-      >
-        ✂️
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            fontWeight: "var(--weight-bold)",
-            fontSize: "var(--size-small)",
-            color: "var(--text-primary)",
-            marginBottom: 2,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {svc.name}
-        </div>
-        <div style={{ fontSize: "var(--size-caption)", color: "var(--text-muted)" }}>
-          {svc.mins} min · {priceDisplay}
-        </div>
-      </div>
-      <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
-        <IconButton
-          label="Edit service"
-          size="sm"
-          variant="ghost"
-          onClick={onEdit}
-          disabled={isPending}
-        >
-          ✎
-        </IconButton>
-        <IconButton
-          label="Delete service"
-          size="sm"
-          variant="ghost"
-          onClick={onDelete}
-          disabled={isPending}
-          style={{ color: "var(--danger)" }}
-        >
-          ×
-        </IconButton>
-      </div>
-    </Card>
-  );
-}
 
 // ── Shared edit/add form ────────────────────────────────────────────────────
 
@@ -105,9 +23,7 @@ function ServiceForm({
 }) {
   const [name, setName] = useState(initial?.name ?? "");
   const [mins, setMins] = useState(initial ? String(initial.mins) : "");
-  const [price, setPrice] = useState(
-    initial ? String(initial.priceCents / 100) : ""
-  );
+  const [price, setPrice] = useState(initial ? String(initial.priceCents / 100) : "");
 
   function handleSave() {
     const parsedMins = parseInt(mins) || 60;
@@ -116,16 +32,7 @@ function ServiceForm({
   }
 
   return (
-    <Card
-      variant="outline"
-      style={{
-        padding: "16px",
-        display: "flex",
-        flexDirection: "column",
-        gap: 12,
-        marginTop: 8,
-      }}
-    >
+    <Card variant="outline" padding="16px" className="flex flex-col gap-3 mt-2">
       <Input
         label="Service name"
         placeholder="e.g. Balayage"
@@ -135,7 +42,7 @@ function ServiceForm({
         // eslint-disable-next-line jsx-a11y/no-autofocus
         autoFocus={!initial}
       />
-      <div style={{ display: "flex", gap: 12 }}>
+      <div className="flex gap-3">
         <Input
           label="Minutes"
           type="number"
@@ -144,7 +51,7 @@ function ServiceForm({
           step={15}
           value={mins}
           onChange={(e) => setMins(e.target.value)}
-          style={{ flex: 1 }}
+          className="flex-1"
         />
         <Input
           label="Price"
@@ -155,17 +62,17 @@ function ServiceForm({
           prefix="$"
           value={price}
           onChange={(e) => setPrice(e.target.value)}
-          style={{ flex: 1 }}
+          className="flex-1"
         />
       </div>
-      <div style={{ display: "flex", gap: 10 }}>
+      <div className="flex gap-2.5">
         <Button variant="ghost" size="sm" onClick={onCancel} disabled={isPending}>
           Cancel
         </Button>
         <Button
           variant="primary"
           size="sm"
-          style={{ flex: 1 }}
+          className="flex-1"
           onClick={handleSave}
           disabled={isPending || !name.trim()}
         >
@@ -213,9 +120,7 @@ export default function ServicesSection({ initial }: { initial: ServiceRow[] }) 
         await updateService(id, fd);
         setServices((prev) =>
           prev.map((s) =>
-            s.id === id
-              ? { ...s, name, mins, priceCents: Math.round(price * 100) }
-              : s
+            s.id === id ? { ...s, name, mins, priceCents: Math.round(price * 100) } : s
           )
         );
         setEditingId(null);
@@ -239,40 +144,20 @@ export default function ServicesSection({ initial }: { initial: ServiceRow[] }) 
   }
 
   return (
-    <section
-      style={{
-        borderTop: "1px solid var(--hairline)",
-        paddingTop: 32,
-      }}
-    >
+    <section className="border-t border-hairline pt-8">
       {/* Header */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 16,
-        }}
-      >
-        <EyebrowLabel style={{ display: "block" }}>Services</EyebrowLabel>
-        <span
-          style={{
-            fontSize: "var(--size-caption)",
-            fontWeight: "var(--weight-bold)",
-            color: "var(--text-muted)",
-            background: "var(--stone)",
-            borderRadius: "var(--radius-pill)",
-            padding: "2px 8px",
-          }}
-        >
+      <div className="flex justify-between items-center mb-4">
+        <EyebrowLabel className="block">Services</EyebrowLabel>
+        <span className="text-xs font-bold text-muted bg-stone rounded-full px-2 py-[2px]">
           {services.length}
         </span>
       </div>
 
       {/* Service rows */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {services.map((svc) =>
-          editingId === svc.id ? (
+      <div className="flex flex-col gap-2">
+        {services.map((svc) => {
+          const priceDisplay = `$${(svc.priceCents / 100).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
+          return editingId === svc.id ? (
             <ServiceForm
               key={svc.id}
               initial={svc}
@@ -282,18 +167,36 @@ export default function ServicesSection({ initial }: { initial: ServiceRow[] }) 
               onCancel={() => setEditingId(null)}
             />
           ) : (
-            <ServiceViewRow
+            <ServiceListItem
               key={svc.id}
-              svc={svc}
-              isPending={isPending}
-              onEdit={() => {
-                setAdding(false);
-                setEditingId(svc.id);
-              }}
-              onDelete={() => handleDelete(svc.id)}
+              name={svc.name}
+              subtitle={`${svc.mins} min · ${priceDisplay}`}
+              actions={
+                <>
+                  <IconButton
+                    label="Edit service"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => { setAdding(false); setEditingId(svc.id); }}
+                    disabled={isPending}
+                  >
+                    ✎
+                  </IconButton>
+                  <IconButton
+                    label="Delete service"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleDelete(svc.id)}
+                    disabled={isPending}
+                    className="text-danger"
+                  >
+                    ×
+                  </IconButton>
+                </>
+              }
             />
-          )
-        )}
+          );
+        })}
       </div>
 
       {/* Add form / add button */}
@@ -305,56 +208,13 @@ export default function ServicesSection({ initial }: { initial: ServiceRow[] }) 
           onCancel={() => setAdding(false)}
         />
       ) : (
-        <button
-          type="button"
-          onClick={() => {
-            setEditingId(null);
-            setAdding(true);
-          }}
+        <AddServiceButton
+          onClick={() => { setEditingId(null); setAdding(true); }}
           disabled={isPending}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            marginTop: 10,
-            padding: "10px 0",
-            background: "none",
-            border: "none",
-            cursor: isPending ? "not-allowed" : "pointer",
-            fontFamily: "var(--font-sans)",
-            fontSize: "var(--size-small)",
-            fontWeight: "var(--weight-medium)",
-            color: isPending ? "var(--text-muted)" : "var(--text-secondary)",
-          }}
-        >
-          <span
-            style={{
-              width: 20,
-              height: 20,
-              border: "1.5px solid var(--stone)",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 14,
-            }}
-          >
-            +
-          </span>
-          Add a service
-        </button>
+        />
       )}
 
-      {error && (
-        <p
-          style={{
-            fontSize: "var(--size-small)",
-            color: "var(--danger)",
-            marginTop: 12,
-          }}
-        >
-          {error}
-        </p>
-      )}
+      {error && <p className="text-sm text-danger mt-3">{error}</p>}
     </section>
   );
 }

@@ -1,15 +1,22 @@
-import React from "react";
+import Link from "next/link";
 import { cn } from "@/lib/cn";
+import type { LinkProps } from "next/link";
+import type React from "react";
 
 type ButtonVariant = "primary" | "secondary" | "accent" | "ghost";
 type ButtonSize = "sm" | "md" | "lg";
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonLinkProps extends LinkProps {
   variant?: ButtonVariant;
   size?: ButtonSize;
   fullWidth?: boolean;
   leadingIcon?: React.ReactNode;
   trailingIcon?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+  target?: string;
+  rel?: string;
+  "aria-label"?: string;
 }
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -25,26 +32,21 @@ const variantClasses: Record<ButtonVariant, string> = {
   ghost:     "bg-transparent text-near-black border-regular border-transparent",
 };
 
-export function Button({
-  children,
-  variant = "primary",
+export function ButtonLink({
+  variant = "secondary",
   size = "md",
   fullWidth = false,
-  disabled = false,
-  type = "button",
   leadingIcon,
   trailingIcon,
+  children,
   className,
   ...rest
-}: ButtonProps) {
+}: ButtonLinkProps) {
   return (
-    <button
-      type={type}
-      disabled={disabled}
+    <Link
       className={cn(
-        "inline-flex items-center justify-center gap-2 leading-none whitespace-nowrap font-bold",
-        "transition-opacity duration-200",
-        "hover:opacity-80 disabled:opacity-45 disabled:cursor-not-allowed disabled:hover:opacity-45",
+        "inline-flex items-center justify-center gap-2 leading-none whitespace-nowrap font-bold no-underline",
+        "transition-opacity duration-200 hover:opacity-80",
         fullWidth && "w-full",
         sizeClasses[size],
         variantClasses[variant],
@@ -55,6 +57,6 @@ export function Button({
       {leadingIcon}
       {children}
       {trailingIcon}
-    </button>
+    </Link>
   );
 }

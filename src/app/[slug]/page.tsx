@@ -2,12 +2,11 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Avatar, EyebrowLabel, Card, Button } from "@/components/ui";
-import Wordmark from "@/components/Wordmark";
+import { PoweredBy } from "@/components/PoweredBy";
 import { formatSlotWhen, formatPrice } from "@/lib/format";
 import { getStylistBySlug } from "@/lib/db/repositories/stylists";
 import { getOpenSlotsBySlug } from "@/lib/db/repositories/slots";
-
-// ── Types ──────────────────────────────────────────────────────────────────
+import { cn } from "@/lib/cn";
 
 interface PublicSlot {
   id: number;
@@ -17,8 +16,6 @@ interface PublicSlot {
   mins: number;
   priceDisplay: string;
 }
-
-// ── Metadata ───────────────────────────────────────────────────────────────
 
 export async function generateMetadata({
   params,
@@ -33,8 +30,6 @@ export async function generateMetadata({
     description: `Book a last-minute opening with ${stylist.name} on BeBooked.`,
   };
 }
-
-// ── Page ───────────────────────────────────────────────────────────────────
 
 export default async function PublicProfilePage({
   params,
@@ -60,51 +55,17 @@ export default async function PublicProfilePage({
   const meta = [stylist.studio, stylist.location].filter(Boolean).join(" · ");
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "var(--warm-cream)",
-        fontFamily: "var(--font-sans)",
-      }}
-    >
-      {/* ── Profile hero ─────────────────────────────────────────────────── */}
-      <div
-        style={{
-          background: "var(--warm-cream)",
-          borderBottom: "1px solid var(--hairline)",
-          padding: "32px var(--gutter) 24px",
-        }}
-      >
-        <div style={{ maxWidth: "var(--app-max)", margin: "0 auto" }}>
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
+    <main className="min-h-screen bg-warm-cream">
+      {/* Profile hero */}
+      <div className="bg-warm-cream border-b border-hairline px-6 pt-8 pb-6">
+        <div className="max-w-[420px] mx-auto">
+          <div className="flex items-start gap-4">
             <Avatar name={stylist.name} src={stylist.photoUrl ?? undefined} size={64} />
             <div>
-              <h1
-                style={{
-                  fontSize: "22px",
-                  fontWeight: "var(--weight-bold)",
-                  color: "var(--text-primary)",
-                  marginBottom: 4,
-                  lineHeight: 1.2,
-                }}
-              >
-                {stylist.name}
-              </h1>
-              {meta && (
-                <div style={{ fontSize: "var(--size-small)", color: "var(--text-muted)" }}>
-                  {meta}
-                </div>
-              )}
+              <h1 className="text-[22px] font-bold mb-1 leading-[1.2]">{stylist.name}</h1>
+              {meta && <div className="text-sm text-muted">{meta}</div>}
               {stylist.bio && (
-                <p
-                  style={{
-                    fontSize: "var(--size-small)",
-                    color: "var(--text-secondary)",
-                    marginTop: 10,
-                    lineHeight: "var(--leading-relaxed)",
-                    maxWidth: 460,
-                  }}
-                >
+                <p className="text-sm text-warm-gray mt-[10px] leading-relaxed max-w-[460px]">
                   {stylist.bio}
                 </p>
               )}
@@ -113,57 +74,27 @@ export default async function PublicProfilePage({
         </div>
       </div>
 
-      {/* ── Slots ────────────────────────────────────────────────────────── */}
-      <div
-        style={{
-          maxWidth: "var(--app-max)",
-          margin: "0 auto",
-          padding: "24px var(--gutter) 64px",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 14,
-          }}
-        >
+      {/* Slots */}
+      <div className="max-w-[420px] mx-auto px-6 pt-6 pb-16">
+        <div className="flex justify-between items-center mb-[14px]">
           <EyebrowLabel>
             <span
-              style={{
-                display: "inline-block",
-                width: 8,
-                height: 8,
-                borderRadius: "50%",
-                background: slots.length > 0 ? "var(--sage)" : "var(--stone)",
-                marginRight: 6,
-                verticalAlign: "middle",
-              }}
+              className={cn(
+                "inline-block size-2 rounded-full mr-1.5 align-middle",
+                slots.length > 0 ? "bg-sage" : "bg-stone",
+              )}
             />
             Open slots
           </EyebrowLabel>
-          <span
-            style={{
-              fontSize: "var(--size-caption)",
-              color: "var(--text-muted)",
-              fontWeight: "var(--weight-medium)",
-            }}
-          >
-            {slots.length} available
-          </span>
+          <span className="text-xs text-muted font-medium">{slots.length} available</span>
         </div>
 
         {slots.length === 0 ? (
-          <div
-            style={{ textAlign: "center", padding: "56px 24px", color: "var(--text-muted)" }}
-          >
-            <p style={{ fontSize: "var(--size-small)", lineHeight: 1.6 }}>
-              No open slots right now. Check back soon.
-            </p>
+          <div className="text-center px-6 py-14 text-muted">
+            <p className="text-sm leading-relaxed">No open slots right now. Check back soon.</p>
           </div>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }} role="list">
+          <div className="flex flex-col gap-3" role="list">
             {slots.map((slot) => (
               <div key={slot.id} role="listitem">
                 <SlotCard slot={slot} />
@@ -172,17 +103,7 @@ export default async function PublicProfilePage({
           </div>
         )}
 
-        <div
-          style={{
-            textAlign: "center",
-            marginTop: 48,
-            fontSize: "var(--size-caption)",
-            color: "var(--text-muted)",
-          }}
-        >
-          Powered by{" "}
-          <Wordmark size="sm" style={{ fontSize: 14, verticalAlign: "middle" }} />
-        </div>
+        <PoweredBy className="mt-12" />
       </div>
     </main>
   );
@@ -193,43 +114,15 @@ export default async function PublicProfilePage({
 function SlotCard({ slot }: { slot: PublicSlot }) {
   return (
     <Card variant="raised" radius="md" padding="18px">
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          marginBottom: 14,
-        }}
-      >
+      <div className="flex justify-between items-start mb-[14px]">
         <div>
-          <div
-            style={{
-              fontWeight: "var(--weight-bold)",
-              fontSize: "var(--size-body)",
-              color: "var(--text-primary)",
-              marginBottom: 4,
-            }}
-          >
-            {slot.name}
-          </div>
-          <div style={{ fontSize: "var(--size-small)", color: "var(--text-muted)" }}>
-            {slot.when} · {slot.mins} min
-          </div>
+          <div className="font-bold text-base mb-1">{slot.name}</div>
+          <div className="text-sm text-muted">{slot.when} · {slot.mins} min</div>
         </div>
-        <div
-          style={{
-            fontWeight: "var(--weight-bold)",
-            fontSize: "var(--size-body)",
-            color: "var(--text-primary)",
-          }}
-        >
-          {slot.priceDisplay}
-        </div>
+        <div className="font-bold text-base">{slot.priceDisplay}</div>
       </div>
-      <Link href={`/b/${slot.shortCode}`} style={{ display: "block", textDecoration: "none" }}>
-        <Button variant="accent" size="sm" style={{ width: "100%" }}>
-          Book this slot
-        </Button>
+      <Link href={`/b/${slot.shortCode}`} className="block no-underline">
+        <Button variant="accent" size="sm" fullWidth>Book this slot</Button>
       </Link>
     </Card>
   );

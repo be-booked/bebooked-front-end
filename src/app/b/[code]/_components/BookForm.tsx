@@ -23,7 +23,6 @@ export default function BookForm({ slotId, shortCode }: BookFormProps) {
       try {
         await bookSlot(formData, slotId, shortCode);
       } catch (err) {
-        // NEXT_REDIRECT throws — let it propagate; anything else is a real error
         if (err instanceof Error && !err.message.includes("NEXT_REDIRECT")) {
           setError(err.message);
         } else {
@@ -35,18 +34,9 @@ export default function BookForm({ slotId, shortCode }: BookFormProps) {
 
   return (
     <form onSubmit={handleSubmit}>
-      <h2
-        style={{
-          fontSize: "var(--size-body)",
-          fontWeight: "var(--weight-bold)",
-          color: "var(--text-primary)",
-          marginBottom: 14,
-        }}
-      >
-        Book this slot
-      </h2>
+      <h2 className="text-base font-bold mb-[14px]">Book this slot</h2>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 20 }}>
+      <div className="flex flex-col gap-[14px] mb-5">
         <Input
           label="Your name"
           name="client_name"
@@ -66,25 +56,9 @@ export default function BookForm({ slotId, shortCode }: BookFormProps) {
         />
       </div>
 
-      {error && (
-        <p
-          style={{
-            fontSize: "var(--size-small)",
-            color: "var(--danger)",
-            marginBottom: 16,
-          }}
-        >
-          {error}
-        </p>
-      )}
+      {error && <p className="text-sm text-danger mb-4">{error}</p>}
 
-      <Button
-        variant="accent"
-        size="lg"
-        style={{ width: "100%" }}
-        type="submit"
-        disabled={isPending}
-      >
+      <Button variant="accent" size="lg" fullWidth type="submit" disabled={isPending}>
         {isPending ? "Booking…" : "Book this slot"}
       </Button>
     </form>

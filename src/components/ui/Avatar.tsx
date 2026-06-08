@@ -1,4 +1,5 @@
 import React from "react";
+import { cn } from "@/lib/cn";
 
 interface AvatarProps extends React.HTMLAttributes<HTMLSpanElement> {
   src?: string;
@@ -6,7 +7,7 @@ interface AvatarProps extends React.HTMLAttributes<HTMLSpanElement> {
   size?: number;
 }
 
-export function Avatar({ src, name = "", size = 48, className = "", style, ...rest }: AvatarProps) {
+export function Avatar({ src, name = "", size = 48, className, style, ...rest }: AvatarProps) {
   const initials = name
     .split(" ")
     .map((w) => w[0])
@@ -17,30 +18,22 @@ export function Avatar({ src, name = "", size = 48, className = "", style, ...re
 
   return (
     <span
-      className={className}
+      className={cn(
+        "inline-flex items-center justify-center rounded-full overflow-hidden",
+        "bg-warm-linen border border-stone text-warm-gray font-medium tracking-[0.02em] shrink-0",
+        className,
+      )}
       style={{
-        display:        "inline-flex",
-        alignItems:     "center",
-        justifyContent: "center",
-        width:          size,
-        height:         size,
-        borderRadius:   "var(--radius-pill)",
-        overflow:       "hidden",
-        background:     "var(--surface-card)",
-        border:         "var(--border-hairline) solid var(--border-default)",
-        color:          "var(--text-secondary)",
-        fontFamily:     "var(--font-sans)",
-        fontWeight:     "var(--weight-medium)",
-        fontSize:       size * 0.38,
-        letterSpacing:  "0.02em",
-        flexShrink:     0,
+        width: size,
+        height: size,
+        fontSize: size * 0.38,
         ...style,
       }}
       {...rest}
     >
       {src ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={src} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        <img src={src} alt={name} className="w-full h-full object-cover" />
       ) : (
         initials || "·"
       )}
