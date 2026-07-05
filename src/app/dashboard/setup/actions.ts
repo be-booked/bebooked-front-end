@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { slugTaken, createStylist } from "@/lib/db/repositories/stylists";
 import { bulkInsertServices } from "@/lib/db/repositories/services";
-import { setupSchema, serviceDraftSchema, firstZodError } from "@/lib/schemas";
+import { profileSchema, serviceDraftSchema, firstZodError } from "@/lib/schemas";
 import { wrapDb } from "@/lib/errors";
 
 function slugify(s: string): string {
@@ -27,13 +27,19 @@ export async function saveSetup(formData: FormData, services: ServiceDraft[]) {
   const { userId } = await auth();
   if (!userId) throw new Error("Not authenticated");
 
-  let profile: z.infer<typeof setupSchema>;
+  let profile: z.infer<typeof profileSchema>;
   try {
-    profile = setupSchema.parse(Object.fromEntries(formData));
+    profile = profileSchema.parse(Object.fromEntries(formData));
   } catch (err) {
     if (err instanceof z.ZodError) throw new Error(firstZodError(err));
     throw err;
   }
+
+  // Arrays come through as multiple FormData entries with the same key
+  const industry    = formData.getAll("industry").map(String).filter(Boolean);
+  const specialties = formData.getAll("specialties").map(String).filter(Boolean);
+
+  if (!industry.length) throw new Error("Select at least one specialty");
 
   // Validate all service drafts
   const parsedServices = services.map((s, i) => {
@@ -51,12 +57,19 @@ export async function saveSetup(formData: FormData, services: ServiceDraft[]) {
 
   const stylist = await wrapDb(() =>
     createStylist({
-      clerkUserId: userId,
-      name:        profile.name,
+      clerkUserId:        userId,
+      name:               profile.name,
       slug,
-      studio:      profile.studio?.trim() || null,
-      location:    profile.location?.trim() || "Charlotte, NC",
-      bio:         profile.bio?.trim() || null,
+      studio:             profile.studio?.trim() || null,
+      bio:                profile.bio?.trim() || null,
+      phone:              profile.phone?.replace(/\D/g, "") || null,
+      addressStreet:      profile.addressStreet?.trim() || null,
+      addressCity:        profile.addressCity?.trim() || null,
+      addressState:       profile.addressState?.toUpperCase().trim() || null,
+      addressZip:         profile.addressZip?.trim() || null,
+      cancellationPolicy: profile.cancellationPolicy?.trim() || null,
+      industry:           industry.length ? industry : null,
+      specialties:        specialties.length ? specialties : null,
     })
   );
 

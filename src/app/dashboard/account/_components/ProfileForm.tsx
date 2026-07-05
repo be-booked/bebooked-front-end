@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { Button, Input, Textarea } from "@/components/ui";
+import { useRef, useState, useTransition } from "react";
+import { Button, FormError } from "@/components/ui";
+import { ProfileFields, type ProfileFieldsHandle } from "@/app/dashboard/_components/ProfileFields";
 import { updateProfile } from "../actions";
 
 interface ProfileFormProps {
@@ -9,9 +10,31 @@ interface ProfileFormProps {
   slug: string;
   studio: string | null;
   bio: string | null;
+  phone: string | null;
+  addressStreet: string | null;
+  addressCity: string | null;
+  addressState: string | null;
+  addressZip: string | null;
+  industry: string[] | null;
+  specialties: string[] | null;
+  cancellationPolicy: string | null;
 }
 
-export default function ProfileForm({ name, slug, studio, bio }: ProfileFormProps) {
+export default function ProfileForm({
+  name,
+  slug,
+  studio,
+  bio,
+  phone,
+  addressStreet,
+  addressCity,
+  addressState,
+  addressZip,
+  industry,
+  specialties,
+  cancellationPolicy,
+}: ProfileFormProps) {
+  const fieldsRef = useRef<ProfileFieldsHandle>(null);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -20,6 +43,11 @@ export default function ProfileForm({ name, slug, studio, bio }: ProfileFormProp
     e.preventDefault();
     setError(null);
     setSaved(false);
+
+    // Trigger per-field validation — highlights failing fields, stops if any fail
+    const valid = fieldsRef.current?.validateAll();
+    if (!valid) return;
+
     const formData = new FormData(e.currentTarget);
 
     startTransition(async () => {
@@ -36,29 +64,25 @@ export default function ProfileForm({ name, slug, studio, bio }: ProfileFormProp
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-[18px]">
-      <Input label="Name" name="name" defaultValue={name} required placeholder="Your full name" />
-      <Input
-        label="Handle"
-        name="slug"
-        defaultValue={slug}
-        required
-        placeholder="your-handle"
-        prefix="bebookedtoday.com/"
-        hint="Lowercase letters, numbers, and hyphens only. This is your public profile URL."
-      />
-      <Input label="Studio / salon name" name="studio" defaultValue={studio ?? ""} placeholder="e.g. Studio 7" />
-      <Textarea
-        label="Bio"
-        id="bio"
-        name="bio"
-        defaultValue={bio ?? ""}
-        placeholder="A short line about you and your work"
-        rows={3}
-        maxLength={250}
+    <form onSubmit={handleSubmit} className="flex flex-col">
+      <ProfileFields
+        ref={fieldsRef}
+        showSlug
+        defaultName={name}
+        defaultSlug={slug}
+        defaultStudio={studio ?? ""}
+        defaultBio={bio ?? ""}
+        defaultPhone={phone ?? ""}
+        defaultAddressStreet={addressStreet ?? ""}
+        defaultAddressCity={addressCity ?? ""}
+        defaultAddressState={addressState ?? ""}
+        defaultAddressZip={addressZip ?? ""}
+        defaultIndustry={industry ?? []}
+        defaultSpecialties={specialties ?? []}
+        defaultCancellationPolicy={cancellationPolicy ?? ""}
       />
 
-      {error && <p className="text-sm text-danger m-0">{error}</p>}
+      <FormError message={error} className="mb-4" />
 
       <Button type="submit" variant="primary" disabled={isPending} className="self-start">
         {isPending ? "Saving…" : saved ? "Saved ✓" : "Save changes"}

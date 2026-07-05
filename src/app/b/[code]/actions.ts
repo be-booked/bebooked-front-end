@@ -29,7 +29,12 @@ export async function bookSlot(
 
   // Insert booking — UNIQUE constraint on slot_id prevents double-booking
   try {
-    await createBooking({ slotId, clientName: data.client_name, clientPhone: data.client_phone });
+    await createBooking({
+      slotId,
+      clientName:  data.client_name,
+      clientPhone: data.client_phone,
+      clientEmail: data.client_email || undefined,
+    });
   } catch (err) {
     // Unique constraint = race condition double-book; anything else gets translated too
     const msg = parseDbError(err);

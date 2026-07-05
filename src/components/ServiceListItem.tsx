@@ -8,7 +8,7 @@ interface ServiceListItemProps {
 }
 
 /**
- * Shared service row: ✂️ icon + name + subtitle + actions slot.
+ * Shared service row: 🌸 icon + name + subtitle + actions slot.
  * Used in setup/page.tsx and account/ServicesSection.tsx.
  */
 export function ServiceListItem({ name, subtitle, actions }: ServiceListItemProps) {
@@ -18,7 +18,7 @@ export function ServiceListItem({ name, subtitle, actions }: ServiceListItemProp
         className="size-8 rounded-[8px] bg-stone flex items-center justify-center shrink-0 text-sm"
         aria-hidden="true"
       >
-        ✂️
+        🌸
       </div>
       <div className="flex-1 min-w-0">
         <div className="font-bold text-sm text-near-black mb-0.5 overflow-hidden text-ellipsis whitespace-nowrap">

@@ -25,6 +25,22 @@ export function formatSlotWhen(slotDate: string, slotTime: string): string {
   return `${dayStr} · ${timeStr}`;
 }
 
+/** "123 Main St, Charlotte, NC 28202" — omits empty parts */
+export function formatAddress(
+  street?: string | null,
+  city?: string | null,
+  state?: string | null,
+  zip?: string | null,
+): string {
+  const line2 = [city, state && zip ? `${state} ${zip}` : (state ?? zip)].filter(Boolean).join(", ");
+  return [street, line2].filter(Boolean).join(", ");
+}
+
+/** "Charlotte, NC" — for compact display in headers */
+export function formatCityState(city?: string | null, state?: string | null): string {
+  return [city, state].filter(Boolean).join(", ");
+}
+
 export function formatPrice(priceCents: number): string {
   return `$${(priceCents / 100).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 }

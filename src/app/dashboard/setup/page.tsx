@@ -1,24 +1,47 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { Button, Input, Textarea, EyebrowLabel, Card, IconButton } from "@/components/ui";
+import { useRef, useState, useTransition } from "react";
+import { Button, Input, EyebrowLabel, Card, IconButton, FormError } from "@/components/ui";
 import { PageHeader } from "@/components/PageHeader";
 import { ServiceListItem } from "@/components/ServiceListItem";
 import { AddServiceButton } from "@/components/AddServiceButton";
+import { ProfileFields, type ProfileFieldsHandle } from "@/app/dashboard/_components/ProfileFields";
 import { saveSetup, type ServiceDraft } from "./actions";
 
 // ── Add service inline form ────────────────────────────────────────────────
 
+type ServiceFieldErrors = Partial<Record<"name" | "mins" | "price", string>>;
+
+function validateServiceName(v: string): string | undefined {
+  if (!v.trim()) return "Service name is required";
+}
+function validateMins(v: string): string | undefined {
+  if (!v.trim()) return "Duration is required";
+  const n = parseInt(v);
+  if (isNaN(n) || n < 15) return "Minimum 15 minutes";
+  if (n > 480) return "Maximum 480 minutes";
+}
+function validatePrice(v: string): string | undefined {
+  if (!v.trim()) return "Price is required";
+  const n = parseFloat(v);
+  if (isNaN(n) || n < 0) return "Price cannot be negative";
+}
+
 function AddServiceForm({ onAdd, onCancel }: { onAdd: (svc: ServiceDraft) => void; onCancel: () => void }) {
-  const [draft, setDraft] = useState({ name: "", mins: "", price: "" });
+  const [name,   setName]   = useState("");
+  const [mins,   setMins]   = useState("");
+  const [price,  setPrice]  = useState("");
+  const [errors, setErrors] = useState<ServiceFieldErrors>({});
 
   function submit() {
-    if (!draft.name.trim()) return;
-    onAdd({
-      name: draft.name.trim(),
-      mins: parseInt(draft.mins) || 60,
-      price: parseFloat(draft.price) || 0,
-    });
+    const next: ServiceFieldErrors = {
+      name:  validateServiceName(name),
+      mins:  validateMins(mins),
+      price: validatePrice(price),
+    };
+    setErrors(next);
+    if (Object.values(next).some(Boolean)) return;
+    onAdd({ name: name.trim(), mins: parseInt(mins), price: parseFloat(price) });
   }
 
   return (
@@ -26,9 +49,11 @@ function AddServiceForm({ onAdd, onCancel }: { onAdd: (svc: ServiceDraft) => voi
       <Input
         label="Service name"
         placeholder="e.g. Balayage"
-        value={draft.name}
-        onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+        value={name}
+        onChange={(e) => { setName(e.target.value); if (errors.name) setErrors((er) => ({ ...er, name: undefined })); }}
+        onBlur={() => setErrors((er) => ({ ...er, name: validateServiceName(name) }))}
         onKeyDown={(e) => e.key === "Enter" && submit()}
+        error={errors.name}
         // eslint-disable-next-line jsx-a11y/no-autofocus
         autoFocus
       />
@@ -36,22 +61,26 @@ function AddServiceForm({ onAdd, onCancel }: { onAdd: (svc: ServiceDraft) => voi
         <Input
           label="Minutes"
           type="number"
-          placeholder="120"
+          placeholder="60"
           min={15}
           step={15}
-          value={draft.mins}
-          onChange={(e) => setDraft({ ...draft, mins: e.target.value })}
+          value={mins}
+          onChange={(e) => { setMins(e.target.value); if (errors.mins) setErrors((er) => ({ ...er, mins: undefined })); }}
+          onBlur={() => setErrors((er) => ({ ...er, mins: validateMins(mins) }))}
+          error={errors.mins}
           className="flex-1"
         />
         <Input
           label="Price"
           type="number"
-          placeholder="180"
+          placeholder="0"
           min={0}
           step={5}
           prefix="$"
-          value={draft.price}
-          onChange={(e) => setDraft({ ...draft, price: e.target.value })}
+          value={price}
+          onChange={(e) => { setPrice(e.target.value); if (errors.price) setErrors((er) => ({ ...er, price: undefined })); }}
+          onBlur={() => setErrors((er) => ({ ...er, price: validatePrice(price) }))}
+          error={errors.price}
           className="flex-1"
         />
       </div>
@@ -73,10 +102,10 @@ const DEFAULT_SERVICES: (ServiceDraft & { id: number })[] = [
 ];
 
 export default function SetupPage() {
+  const fieldsRef = useRef<ProfileFieldsHandle>(null);
   const [isPending, startTransition] = useTransition();
   const [services, setServices] = useState<(ServiceDraft & { id: number })[]>(DEFAULT_SERVICES);
   const [adding, setAdding] = useState(false);
-  const [bio, setBio] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   function addService(svc: ServiceDraft) {
@@ -91,8 +120,12 @@ export default function SetupPage() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+
+    // Trigger per-field validation — highlights failing fields, stops if any fail
+    const valid = fieldsRef.current?.validateAll();
+    if (!valid) return;
+
     const formData = new FormData(e.currentTarget);
-    formData.set("bio", bio);
 
     startTransition(async () => {
       try {
@@ -107,12 +140,11 @@ export default function SetupPage() {
 
   return (
     <main className="min-h-screen bg-warm-cream">
-      {/* Step header */}
       <PageHeader className="justify-center">
         <EyebrowLabel tone="muted">Step 1 of 2</EyebrowLabel>
       </PageHeader>
 
-      <form onSubmit={handleSubmit} className="max-w-[420px] mx-auto px-6 pt-7 pb-[100px]">
+      <form onSubmit={handleSubmit} className="max-w-[420px] mx-auto px-6 pt-7 pb-[120px]">
         <h1 className="text-[28px] font-bold leading-snug mb-1.5">Set up your profile</h1>
         <p className="text-sm text-muted mb-7 leading-relaxed">
           This is what clients see on your booking link.
@@ -121,16 +153,10 @@ export default function SetupPage() {
         {/* Photo upload placeholder */}
         <div className="flex items-center gap-4 mb-7">
           <div className="relative cursor-pointer">
-            <div
-              className="size-16 rounded-full bg-stone flex items-center justify-center text-2xl"
-              aria-hidden="true"
-            >
+            <div className="size-16 rounded-full bg-stone flex items-center justify-center text-2xl" aria-hidden="true">
               👤
             </div>
-            <div
-              className="absolute bottom-0 right-0 size-[22px] rounded-full bg-near-black flex items-center justify-center text-[11px] text-warm-cream"
-              aria-hidden="true"
-            >
+            <div className="absolute bottom-0 right-0 size-[22px] rounded-full bg-near-black flex items-center justify-center text-[11px] text-warm-cream" aria-hidden="true">
               +
             </div>
           </div>
@@ -140,26 +166,10 @@ export default function SetupPage() {
           </div>
         </div>
 
-        {/* Profile fields */}
-        <div className="flex flex-col gap-4 mb-7">
-          <Input label="Your name" name="name" placeholder="e.g. Jordan Avery" required autoComplete="name" />
-          <Input label="Studio / business" name="studio" placeholder="e.g. Avery Hair Co." autoComplete="organization" />
-          <Input label="Location" name="location" defaultValue="Charlotte, NC" placeholder="City, State" />
-          <div>
-            <Textarea
-              label="Bio"
-              id="bio"
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              maxLength={250}
-              placeholder="A short line about you and your work"
-              rows={3}
-            />
-            <div className="text-right text-[11px] text-muted mt-1">{bio.length}/250</div>
-          </div>
-        </div>
+        {/* All profile fields (name, studio, bio, phone, address, industry, specialties, policy) */}
+        <ProfileFields ref={fieldsRef} />
 
-        {/* Services */}
+        {/* ── Services ── */}
         <div className="flex justify-between items-center mb-3">
           <EyebrowLabel>Your services</EyebrowLabel>
           <span className="text-xs font-bold text-muted bg-stone rounded-full px-2 py-[2px]">
@@ -188,7 +198,7 @@ export default function SetupPage() {
           <AddServiceButton onClick={() => setAdding(true)} />
         )}
 
-        {error && <p className="text-sm text-danger mt-4">{error}</p>}
+        <FormError message={error} className="mt-4" />
 
         {/* Sticky footer CTA */}
         <div className="fixed bottom-0 left-0 right-0 bg-warm-cream border-t border-hairline px-6 py-4">

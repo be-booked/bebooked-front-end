@@ -3,7 +3,9 @@
 import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { randomUUID } from "crypto";
 import { getStylistByClerkId, slugTaken, updateStylist } from "@/lib/db/repositories/stylists";
+import { createPresignedUploadUrl } from "@/lib/r2";
 import {
   insertService,
   updateService as dbUpdateService,
@@ -14,6 +16,44 @@ import { wrapDb } from "@/lib/errors";
 
 function slugify(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+// ── Photo upload ───────────────────────────────────────────────────────────
+
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
+type AllowedType = (typeof ALLOWED_TYPES)[number];
+
+/** Returns a short-lived presigned PUT URL the client can upload to directly. */
+export async function getPhotoUploadUrl(
+  contentType: string,
+): Promise<{ uploadUrl: string; filePublicUrl: string }> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Not authenticated");
+
+  if (!ALLOWED_TYPES.includes(contentType as AllowedType)) {
+    throw new Error("Only JPEG, PNG, and WebP images are allowed");
+  }
+
+  const stylist = await wrapDb(() => getStylistByClerkId(userId));
+  if (!stylist) throw new Error("No stylist profile found");
+
+  const ext = contentType === "image/png" ? "png" : contentType === "image/webp" ? "webp" : "jpg";
+  const key = `profiles/${stylist.id}/${randomUUID()}.${ext}`;
+
+  return createPresignedUploadUrl(key, contentType);
+}
+
+/** Persists the uploaded photo URL to the stylist's profile. */
+export async function savePhotoUrl(photoUrl: string): Promise<void> {
+  const { userId } = await auth();
+  if (!userId) throw new Error("Not authenticated");
+
+  const stylist = await wrapDb(() => getStylistByClerkId(userId));
+  if (!stylist) throw new Error("No stylist profile found");
+
+  await wrapDb(() => updateStylist(userId, { photoUrl }));
+  revalidatePath("/dashboard/account");
+  revalidatePath(`/${stylist.slug}`);
 }
 
 // ── Profile ────────────────────────────────────────────────────────────────
@@ -37,12 +77,26 @@ export async function updateProfile(formData: FormData) {
     throw new Error("That handle is already taken — try another");
   }
 
+  // Arrays come through as multiple FormData entries with the same key
+  const industry    = formData.getAll("industry").map(String).filter(Boolean);
+  const specialties = formData.getAll("specialties").map(String).filter(Boolean);
+
+  if (!industry.length) throw new Error("Select at least one specialty");
+
   await wrapDb(() =>
     updateStylist(userId, {
-      name:   data.name,
+      name:               data.name,
       slug,
-      studio: data.studio?.trim() || null,
-      bio:    data.bio?.trim() || null,
+      studio:             data.studio?.trim() || null,
+      bio:                data.bio?.trim() || null,
+      phone:              data.phone?.replace(/\D/g, "") || null,
+      addressStreet:      data.addressStreet?.trim() || null,
+      addressCity:        data.addressCity?.trim() || null,
+      addressState:       data.addressState?.toUpperCase().trim() || null,
+      addressZip:         data.addressZip?.trim() || null,
+      cancellationPolicy: data.cancellationPolicy?.trim() || null,
+      industry:           industry.length ? industry : null,
+      specialties:        specialties.length ? specialties : null,
     })
   );
 

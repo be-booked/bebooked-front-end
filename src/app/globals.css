@@ -23,6 +23,9 @@
   --sage-deep: #4a5b40;
   --sage-soft: #eaeee6;
 
+  /* ── Accent metals ── */
+  --gold: #9a6c10;   /* dark amber-gold — 5.4:1 contrast on warm-cream */
+
   /* ── Semantic feedback ── */
   --success:      #5c7050;
   --success-soft: #eaeee6;
@@ -163,6 +166,7 @@
   --color-danger-soft:   var(--danger-soft);
   --color-success:       var(--success);
   --color-success-soft:  var(--success-soft);
+  --color-gold:          var(--gold);
 
   /* ── Border widths ── */
   --border-width-regular: var(--border-regular); /* → border-regular (1.5px) */
@@ -186,4 +190,15 @@ body {
 :focus-visible {
   outline: 2px solid var(--near-black);
   outline-offset: 2px;
+}
+
+/* Suppress browser focus ring on form controls — border color change handles focus state */
+input:focus,
+input:focus-visible,
+textarea:focus,
+textarea:focus-visible,
+select:focus,
+select:focus-visible {
+  outline: none;
+  box-shadow: none;
 }

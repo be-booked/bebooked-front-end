@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getStylistByClerkId } from "@/lib/db/repositories/stylists";
 import { shortCodeExists, createSlot } from "@/lib/db/repositories/slots";
+import { insertService } from "@/lib/db/repositories/services";
 import { createSlotSchema, firstZodError } from "@/lib/schemas";
 import { wrapDb } from "@/lib/errors";
 
@@ -30,6 +31,17 @@ export async function createSlotAction(formData: FormData) {
   const priceCents = Math.round(data.price * 100);
   const note       = data.note?.trim() || null;
 
+  // Optionally persist as a new service on the stylist's profile
+  if (formData.get("save_as_service") === "1") {
+    await wrapDb(() =>
+      insertService(stylist.id, {
+        name:         data.service_name,
+        durationMins: data.duration_mins,
+        priceCents,
+      })
+    );
+  }
+
   // Generate a unique short code (retry on collision)
   let shortCode = generateShortCode();
   for (let i = 0; i < 5; i++) {
@@ -39,14 +51,15 @@ export async function createSlotAction(formData: FormData) {
 
   await wrapDb(() =>
     createSlot({
-      stylistId:    stylist.id,
-      serviceName:  data.service_name,
-      durationMins: data.duration_mins,
+      stylistId:         stylist.id,
+      serviceName:       data.service_name,
+      durationMins:      data.duration_mins,
       priceCents,
-      slotDate:     data.slot_date,
-      slotTime:     data.slot_time,
+      slotDate:          data.slot_date,
+      slotTime:          data.slot_time,
       shortCode,
       note,
+      bookingCutoffMins: data.booking_cutoff_mins ?? null,
     })
   );
 

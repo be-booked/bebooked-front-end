@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Wordmark from "@/components/Wordmark";
 import { PageHeader } from "@/components/PageHeader";
 import ProfileForm from "./_components/ProfileForm";
+import PhotoUpload from "./_components/PhotoUpload";
 import ServicesSection from "./_components/ServicesSection";
 import { SignOutButton } from "./_components/SignOutButton";
 import { type ServiceRow } from "./actions";
@@ -49,11 +50,23 @@ export default async function AccountPage() {
           <p className="text-sm text-muted mb-6 leading-relaxed">
             What clients see when they visit your booking page.
           </p>
+          <PhotoUpload
+            name={stylist?.name ?? ""}
+            currentUrl={stylist?.photoUrl ?? null}
+          />
           <ProfileForm
             name={stylist?.name ?? ""}
             slug={stylist?.slug ?? ""}
             studio={stylist?.studio ?? null}
             bio={stylist?.bio ?? null}
+            phone={stylist?.phone ?? null}
+            addressStreet={stylist?.addressStreet ?? null}
+            addressCity={stylist?.addressCity ?? null}
+            addressState={stylist?.addressState ?? null}
+            addressZip={stylist?.addressZip ?? null}
+            industry={stylist?.industry ?? null}
+            specialties={stylist?.specialties ?? null}
+            cancellationPolicy={stylist?.cancellationPolicy ?? null}
           />
         </section>
 

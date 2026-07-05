@@ -8,3 +8,4 @@ export { EyebrowLabel } from "./EyebrowLabel";
 export { IconButton }   from "./IconButton";
 export { Badge }        from "./Badge";
 export { Avatar }       from "./Avatar";
+export { FormError }    from "./FormError";

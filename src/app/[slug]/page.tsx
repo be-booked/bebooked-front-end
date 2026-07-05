@@ -5,10 +5,11 @@ import { Calendar } from "lucide-react";
 import { Avatar, EyebrowLabel, Card, Button } from "@/components/ui";
 import { PoweredBy } from "@/components/PoweredBy";
 import { ShareProfileButton } from "./_components/ShareProfileButton";
-import { formatSlotWhen, formatPrice } from "@/lib/format";
+import { formatPrice, formatCityState } from "@/lib/format";
+import { LocalSlotTime } from "@/components/LocalSlotTime";
 import { auth } from "@clerk/nextjs/server";
 import { getStylistBySlug } from "@/lib/db/repositories/stylists";
-import { getOpenSlotsBySlug } from "@/lib/db/repositories/slots";
+import { getAllPublicSlotsBySlug } from "@/lib/db/repositories/slots";
 import { APP_URL } from "@/lib/url";
 import { cn } from "@/lib/cn";
 
@@ -16,7 +17,8 @@ interface PublicSlot {
   id: number;
   shortCode: string;
   name: string;
-  when: string;
+  slotDate: string;  // UTC "YYYY-MM-DD"
+  slotTime: string;  // UTC "HH:MM"
   mins: number;
   priceDisplay: string;
 }
@@ -50,18 +52,25 @@ export default async function PublicProfilePage({
 
   const isOwner = !!userId && userId === stylist.clerkUserId;
 
-  const slotRows = await getOpenSlotsBySlug(slug);
+  const slotRows = await getAllPublicSlotsBySlug(slug);
 
-  const slots: PublicSlot[] = slotRows.map((r) => ({
-    id:           r.id,
-    shortCode:    r.shortCode,
-    name:         r.serviceName,
-    when:         formatSlotWhen(r.slotDate, r.slotTime),
-    mins:         r.durationMins,
-    priceDisplay: formatPrice(r.priceCents),
-  }));
+  function mapSlot(r: (typeof slotRows)[number]): PublicSlot {
+    return {
+      id:           r.id,
+      shortCode:    r.shortCode,
+      name:         r.serviceName,
+      slotDate:     r.slotDate,
+      slotTime:     r.slotTime,
+      mins:         r.durationMins,
+      priceDisplay: formatPrice(r.priceCents),
+    };
+  }
 
-  const meta = [stylist.studio, stylist.location].filter(Boolean).join(" · ");
+  const openSlots   = slotRows.filter((r) => r.status === "open").map(mapSlot);
+  const bookedSlots = slotRows.filter((r) => r.status === "booked").map(mapSlot);
+  const hasAnySlots = openSlots.length > 0 || bookedSlots.length > 0;
+
+  const meta = [stylist.studio, formatCityState(stylist.addressCity, stylist.addressState)].filter(Boolean).join(" · ");
 
   return (
     <main className="min-h-screen bg-warm-cream">
@@ -101,31 +110,62 @@ export default async function PublicProfilePage({
 
       {/* Slots */}
       <div className="max-w-[420px] mx-auto px-6 pt-6 pb-16">
+
+        {/* ── Open slots ── */}
         <div className="flex justify-between items-center mb-[14px]">
           <EyebrowLabel>
             <span
               className={cn(
                 "inline-block size-2 rounded-full mr-1.5 align-middle",
-                slots.length > 0 ? "bg-sage" : "bg-stone",
+                openSlots.length > 0 ? "bg-sage" : "bg-stone",
               )}
             />
             Open slots
           </EyebrowLabel>
-          <span className="text-xs text-muted font-medium">{slots.length} available</span>
+          <span className="text-xs text-muted font-medium">{openSlots.length} available</span>
         </div>
 
-        {slots.length === 0 ? (
+        {/* No slots at all → full empty state */}
+        {!hasAnySlots && (
           <div className="text-center px-6 py-14 text-muted">
             <p className="text-sm leading-relaxed">No open slots right now. Check back soon.</p>
           </div>
-        ) : (
+        )}
+
+        {/* No open slots but booked slots exist → compact note */}
+        {hasAnySlots && openSlots.length === 0 && (
+          <p className="text-sm text-muted py-3 mb-2">No openings right now — check back soon.</p>
+        )}
+
+        {/* Open slot cards */}
+        {openSlots.length > 0 && (
           <div className="flex flex-col gap-3" role="list">
-            {slots.map((slot) => (
+            {openSlots.map((slot) => (
               <div key={slot.id} role="listitem">
                 <SlotCard slot={slot} />
               </div>
             ))}
           </div>
+        )}
+
+        {/* ── Recently booked ── */}
+        {bookedSlots.length > 0 && (
+          <>
+            <div className="flex justify-between items-center mt-8 mb-[14px]">
+              <EyebrowLabel>
+                <span className="inline-block size-2 rounded-full mr-1.5 align-middle bg-stone" />
+                Booked
+              </EyebrowLabel>
+              <span className="text-xs text-muted font-medium">{bookedSlots.length} booked</span>
+            </div>
+            <div className="flex flex-col gap-3" role="list">
+              {bookedSlots.map((slot) => (
+                <div key={slot.id} role="listitem">
+                  <BookedSlotCard slot={slot} />
+                </div>
+              ))}
+            </div>
+          </>
         )}
 
         <PoweredBy className="mt-12" />
@@ -134,7 +174,7 @@ export default async function PublicProfilePage({
   );
 }
 
-// ── Slot card ──────────────────────────────────────────────────────────────
+// ── Open slot card ─────────────────────────────────────────────────────────
 
 function SlotCard({ slot }: { slot: PublicSlot }) {
   return (
@@ -144,7 +184,7 @@ function SlotCard({ slot }: { slot: PublicSlot }) {
           <div className="font-bold text-base mb-1">{slot.name}</div>
           <div className="text-sm text-muted flex items-center gap-1.5">
             <Calendar size={13} strokeWidth={2} className="shrink-0 text-muted" />
-            {slot.when} · {slot.mins} min
+            <LocalSlotTime utcDate={slot.slotDate} utcTime={slot.slotTime} /> · {slot.mins} min
           </div>
         </div>
         <div className="font-bold text-base">{slot.priceDisplay}</div>
@@ -152,6 +192,30 @@ function SlotCard({ slot }: { slot: PublicSlot }) {
       <Link href={`/b/${slot.shortCode}`} className="block no-underline">
         <Button variant="accent" size="sm" fullWidth>Book this slot</Button>
       </Link>
+    </Card>
+  );
+}
+
+// ── Booked slot card ───────────────────────────────────────────────────────
+
+function BookedSlotCard({ slot }: { slot: PublicSlot }) {
+  return (
+    <Card variant="linen" radius="md" padding="18px">
+      <div className="flex justify-between items-start mb-[14px]">
+        <div>
+          <div className="font-bold text-base text-muted mb-1">{slot.name}</div>
+          <div className="text-sm text-muted flex items-center gap-1.5">
+            <Calendar size={13} strokeWidth={2} className="shrink-0 text-muted" />
+            <LocalSlotTime utcDate={slot.slotDate} utcTime={slot.slotTime} /> · {slot.mins} min
+          </div>
+        </div>
+        <div className="font-bold text-base text-muted">{slot.priceDisplay}</div>
+      </div>
+      <div>
+        <span className="inline-flex items-center px-3 py-1.5 text-[11px] font-semibold tracking-[0.08em] uppercase bg-stone/50 text-muted">
+          Booked
+        </span>
+      </div>
     </Card>
   );
 }

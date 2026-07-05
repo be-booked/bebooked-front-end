@@ -13,6 +13,9 @@ const TABS = [
 export function DashboardNav() {
   const pathname = usePathname();
 
+  // Hide during onboarding flows
+  if (pathname.startsWith("/dashboard/setup")) return null;
+
   return (
     <nav
       className="fixed bottom-0 left-0 right-0 z-50 bg-warm-cream border-t border-hairline"

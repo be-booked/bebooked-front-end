@@ -1,12 +1,14 @@
+import React from "react";
 import { notFound } from "next/navigation";
 import { Avatar, EyebrowLabel, Card, ButtonLink } from "@/components/ui";
 import { PoweredBy } from "@/components/PoweredBy";
-import { formatSlotWhen, formatPrice } from "@/lib/format";
+import { formatPrice, formatAddress } from "@/lib/format";
+import { LocalSlotTime } from "@/components/LocalSlotTime";
 import { getBookingDetails } from "@/lib/db/repositories/bookings";
 
 // ── Recap row ──────────────────────────────────────────────────────────────
 
-function RecapRow({ icon, label, value }: { icon: string; label: string; value: string }) {
+function RecapRow({ icon, label, value }: { icon: string; label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-center gap-2.5 py-[9px] border-b border-hairline">
       <span className="text-sm w-5 text-center shrink-0">{icon}</span>
@@ -28,9 +30,7 @@ export default async function ConfirmedPage({
   const row = await getBookingDetails(code);
   if (!row) notFound();
 
-  const when         = formatSlotWhen(row.slotDate, row.slotTime);
   const priceDisplay = formatPrice(row.priceCents);
-  const maskedPhone  = row.clientPhone.replace(/\d(?=\d{4})/g, "•");
 
   return (
     <main className="min-h-screen bg-warm-cream flex flex-col">
@@ -43,7 +43,7 @@ export default async function ConfirmedPage({
             </div>
             <h1 className="text-[28px] font-bold mt-[18px] mb-1.5">You&apos;re booked.</h1>
             <p className="text-sm text-muted max-w-[280px] leading-relaxed">
-              We&apos;ve texted your confirmation to +1 {maskedPhone}.
+              Your appointment is confirmed. Details are below.
             </p>
           </div>
 
@@ -58,19 +58,29 @@ export default async function ConfirmedPage({
               </div>
             </div>
 
-            <RecapRow icon="✂" label="Service" value={row.serviceName} />
-            <RecapRow icon="📅" label="When"    value={when} />
+            <RecapRow icon="🌸" label="Service" value={row.serviceName} />
+            <RecapRow icon="📅" label="When"    value={<LocalSlotTime utcDate={row.slotDate} utcTime={row.slotTime} />} />
             <RecapRow icon="⏱"  label="Length"  value={`${row.durationMins} min`} />
-            {row.location && <RecapRow icon="📍" label="Where" value={row.location} />}
+            {formatAddress(row.addressStreet, row.addressCity, row.addressState, row.addressZip) && (
+              <RecapRow icon="📍" label="Where" value={formatAddress(row.addressStreet, row.addressCity, row.addressState, row.addressZip)} />
+            )}
             <RecapRow icon="$"  label="Price"   value={priceDisplay} />
           </Card>
 
           {/* Action buttons */}
           <div className="flex gap-2.5 mt-4">
-            {/* Add to calendar — placeholder until calendar integration is wired up */}
-            <span className="flex-1 inline-flex items-center justify-center gap-2 py-[13px] px-4 text-sm font-bold tracking-[0.04em] leading-none border-regular border-stone bg-transparent text-near-black cursor-default opacity-45">
-              📅 Add to calendar
-            </span>
+            {row.phone ? (
+              <a
+                href={`sms:${row.phone.replace(/\D/g, "")}`}
+                className="flex-1 inline-flex items-center justify-center gap-2 py-[13px] px-4 text-sm font-bold tracking-[0.04em] leading-none border border-near-black bg-transparent text-near-black no-underline"
+              >
+                💬 Contact
+              </a>
+            ) : (
+              <span className="flex-1 inline-flex items-center justify-center gap-2 py-[13px] px-4 text-sm font-bold tracking-[0.04em] leading-none border border-stone bg-transparent text-near-black opacity-40 cursor-default">
+                📅 Add to calendar
+              </span>
+            )}
             <ButtonLink
               href={`/${row.slug}`}
               variant="secondary"
@@ -80,6 +90,14 @@ export default async function ConfirmedPage({
               ← More slots
             </ButtonLink>
           </div>
+
+          {/* Cancellation policy */}
+          {row.cancellationPolicy && (
+            <div className="mt-4 bg-linen border border-hairline px-4 py-3">
+              <p className="text-[11px] font-semibold tracking-[0.1em] uppercase text-muted mb-1">Cancellation policy</p>
+              <p className="text-sm text-near-black leading-relaxed">{row.cancellationPolicy}</p>
+            </div>
+          )}
         </div>
 
         {/* Footer */}

@@ -5,7 +5,12 @@ import { stylists } from "../schema";
 export type Stylist = typeof stylists.$inferSelect;
 type NewStylist = typeof stylists.$inferInsert;
 type UpdateStylistData = Partial<
-  Pick<Stylist, "name" | "slug" | "studio" | "location" | "bio" | "photoUrl">
+  Pick<
+    Stylist,
+    | "name" | "slug" | "studio" | "location" | "bio" | "photoUrl"
+    | "phone" | "addressStreet" | "addressCity" | "addressState" | "addressZip"
+    | "industry" | "specialties" | "cancellationPolicy"
+  >
 >;
 
 export async function getStylistByClerkId(

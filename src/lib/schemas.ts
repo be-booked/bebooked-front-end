@@ -31,18 +31,43 @@ export const serviceFormSchema = z.object({
 
 export const profileSchema = z.object({
   name,
-  slug:   z.string().min(1, "Handle is required").max(60).regex(/^[a-z0-9-]+$/, "Handle can only contain lowercase letters, numbers, and hyphens").optional(),
+  slug: z.string()
+    .min(1, "Handle is required")
+    .max(60, "Handle must be 60 characters or less")
+    .regex(/^[a-z0-9-]+$/, "Lowercase letters, numbers, and hyphens only")
+    .optional(),
   studio,
   bio,
+  // Phone required for providers
+  phone: z.string()
+    .min(1, "Phone number is required")
+    .transform((v) => v.replace(/\D/g, ""))
+    .refine((v) => v.length === 10, "Enter a valid 10-digit phone number"),
+  // Address — street, state, zip required; city optional
+  addressStreet: z.string().min(1, "Street address is required").max(200),
+  addressCity:   z.string().min(1, "City is required").max(100),
+  addressState:  z.string()
+    .min(1, "State is required")
+    .transform((v) => v.toUpperCase().trim())
+    .refine((v) => /^[A-Z]{2}$/.test(v), "Enter a 2-letter state code (e.g. NC)"),
+  addressZip: z.string()
+    .min(1, "ZIP code is required")
+    .transform((v) => v.trim())
+    .refine((v) => /^\d{5}(-\d{4})?$/.test(v), "Enter a valid ZIP code (e.g. 28202)"),
+  cancellationPolicy: z.string().min(1, "Cancellation policy is required").max(150, "Cancellation policy must be 150 characters or less"),
 });
 
 export const createSlotSchema = z.object({
-  service_name:  z.string().min(1, "Service is required"),
-  slot_date:     z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date"),
-  slot_time:     z.string().regex(/^\d{2}:\d{2}$/, "Invalid time"),
-  duration_mins: mins,
-  price:         dollars,
-  note:          z.string().max(500).optional(),
+  service_name:        z.string().min(1, "Service is required"),
+  slot_date:           z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date"),
+  slot_time:           z.string().regex(/^\d{2}:\d{2}$/, "Invalid time"),
+  duration_mins:       mins,
+  price:               dollars,
+  note:                z.string().max(500).optional(),
+  booking_cutoff_mins: z.preprocess(
+    (v) => (v === "" || v == null ? undefined : Number(v)),
+    z.number().int().min(0).optional()
+  ),
 });
 
 export const bookingSchema = z.object({
@@ -50,7 +75,8 @@ export const bookingSchema = z.object({
   client_phone: z.string()
     .min(1, "Phone number is required")
     .transform((v) => v.replace(/\D/g, ""))
-    .refine((v) => v.length >= 7 && v.length <= 15, "Enter a valid phone number"),
+    .refine((v) => v.length === 10, "Enter a valid 10-digit US phone number"),
+  client_email: z.string().email("Enter a valid email address").min(1, "Email is required"),
 });
 
 // ── Helper ─────────────────────────────────────────────────────────────────

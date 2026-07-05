@@ -1,22 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Share2 } from "lucide-react";
 import { Card, Button } from "@/components/ui";
+import { LocalSlotTime } from "@/components/LocalSlotTime";
 import { cn } from "@/lib/cn";
 import { APP_URL, APP_HOST } from "@/lib/url";
+import { deleteSlotAction } from "@/app/dashboard/actions";
 
 export type SlotCardData = {
   id: number;
   name: string;
-  when: string;
+  slotDate: string;  // UTC "YYYY-MM-DD"
+  slotTime: string;  // UTC "HH:MM"
   mins: number;
   priceDisplay: string;
   shortCode: string;
 };
 
 export default function SlotCard({ slot }: { slot: SlotCardData }) {
-  const [copied, setCopied] = useState(false);
+  const [copied,      setCopied]      = useState(false);
+  const [confirming,  setConfirming]  = useState(false);
+  const [isPending,   startTransition] = useTransition();
+
+  function handleDelete() {
+    startTransition(async () => {
+      await deleteSlotAction(slot.id);
+    });
+  }
 
   const bookingUrl = `${APP_HOST}/b/${slot.shortCode}`;
   const fullUrl    = `${APP_URL}/b/${slot.shortCode}`;
@@ -53,7 +64,7 @@ export default function SlotCard({ slot }: { slot: SlotCardData }) {
         <div>
           <div className="font-bold text-base text-near-black mb-1">{slot.name}</div>
           <div className="text-sm text-muted flex items-center gap-[5px]">
-            {slot.when} · {slot.mins} min
+            <LocalSlotTime utcDate={slot.slotDate} utcTime={slot.slotTime} /> · {slot.mins} min
           </div>
         </div>
         <div className="font-bold text-base text-near-black shrink-0 ml-3">
@@ -88,6 +99,36 @@ export default function SlotCard({ slot }: { slot: SlotCardData }) {
         <Share2 size={15} strokeWidth={2.5} />
         Share
       </Button>
+
+      {/* Delete — inline confirm to avoid accidental taps */}
+      {!confirming ? (
+        <button
+          type="button"
+          onClick={() => setConfirming(true)}
+          className="text-xs text-muted hover:text-danger transition-colors text-center cursor-pointer bg-transparent border-none p-0 leading-none"
+        >
+          Delete slot
+        </button>
+      ) : (
+        <div className="flex items-center justify-center gap-3 text-xs">
+          <span className="text-muted">Remove this slot?</span>
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={isPending}
+            className="text-danger font-semibold cursor-pointer bg-transparent border-none p-0 leading-none disabled:opacity-50"
+          >
+            {isPending ? "Deleting…" : "Yes, delete"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setConfirming(false)}
+            className="text-muted cursor-pointer bg-transparent border-none p-0 leading-none"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
     </Card>
   );
 }

@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Button, ButtonLink, Input, Select, EyebrowLabel } from "@/components/ui";
+import { Button, Input, Select, EyebrowLabel } from "@/components/ui";
+import { FormError } from "@/components/ui/FormError";
 import { PageHeader } from "@/components/PageHeader";
 import { createSlotAction } from "../actions";
 import { cn } from "@/lib/cn";
@@ -40,7 +41,17 @@ function getNextDays(count: number): { label: string; value: string }[] {
 
 const DAYS = getNextDays(5);
 
-// ── Chip ───────────────────────────────────────────────────────────────────
+const CUTOFF_OPTIONS: { value: string; label: string }[] = [
+  { value: "",     label: "No minimum notice" },
+  { value: "15",   label: "15 minutes before" },
+  { value: "30",   label: "30 minutes before" },
+  { value: "60",   label: "1 hour before" },
+  { value: "120",  label: "2 hours before" },
+  { value: "180",  label: "3 hours before" },
+  { value: "240",  label: "4 hours before" },
+  { value: "360",  label: "6 hours before" },
+];
+
 function Chip({ active, children, onClick }: { active: boolean; children: React.ReactNode; onClick: () => void }) {
   return (
     <button
@@ -58,41 +69,93 @@ function Chip({ active, children, onClick }: { active: boolean; children: React.
   );
 }
 
-// ── Form ───────────────────────────────────────────────────────────────────
 export default function CreateSlotForm({ services }: { services: ServiceOption[] }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  const [svcIndex, setSvcIndex] = useState(0);
-  const [day, setDay] = useState(DAYS[0].value);
-  const [time, setTime] = useState("14:00");
-  const [price, setPrice] = useState(services[0]?.price ?? 0);
-  const [mins, setMins] = useState(services[0]?.mins ?? 60);
-  const [note, setNote] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const hasExisting = services.length > 0;
+  const [svcValue, setSvcValue] = useState(hasExisting ? "0" : "__new__");
+  const isNewService = svcValue === "__new__";
+  const chosen = isNewService ? null : services[Number(svcValue)];
 
-  const chosen = services[svcIndex];
+  const [newSvcName,  setNewSvcName]  = useState("");
+  const [nameError,   setNameError]   = useState<string | undefined>();
 
-  function pickService(i: number) {
-    setSvcIndex(i);
-    setPrice(services[i].price);
-    setMins(services[i].mins);
+  const [day,       setDay]      = useState(DAYS[0].value);
+  const [time,      setTime]     = useState("");
+  const [timeError, setTimeError] = useState<string | undefined>();
+  const [price,     setPrice]    = useState<string>(services[0]?.price?.toString() ?? "");
+  const [priceError,setPriceError] = useState<string | undefined>();
+  const [mins,      setMins]     = useState<string>(services[0]?.mins?.toString()  ?? "");
+  const [minsError, setMinsError] = useState<string | undefined>();
+  const [note,   setNote]   = useState("");
+  const [cutoff, setCutoff] = useState("");
+  const [error,  setError]  = useState<string | null>(null);
+
+  function validateTime(v: string)  { if (!v) return "Time is required"; }
+  function validateMins(v: string)  {
+    if (!v) return "Duration is required";
+    const n = Number(v);
+    if (isNaN(n) || n < 15) return "Minimum 15 minutes";
+    if (n > 480) return "Maximum 8 hours";
+  }
+  function validatePrice(v: string) {
+    if (v === "") return "Price is required";
+    if (Number(v) < 0) return "Price cannot be negative";
   }
 
-  const selectedDay = DAYS.find((d) => d.value === day);
+  function pickService(val: string) {
+    setSvcValue(val);
+    setNameError(undefined);
+    setMinsError(undefined);
+    setPriceError(undefined);
+    if (val === "__new__") {
+      setNewSvcName("");
+      setMins("");
+      setPrice("");
+    } else {
+      const i = Number(val);
+      setMins(String(services[i].mins));
+      setPrice(String(services[i].price));
+    }
+  }
+
+  const previewName = isNewService ? (newSvcName.trim() || "New service") : (chosen?.name ?? "");
+  const selectedDay  = DAYS.find((d) => d.value === day);
   const selectedTime = TIME_OPTIONS.find((t) => t.value === time);
-  const previewWhen = `${selectedDay?.label ?? ""} · ${selectedTime?.label ?? ""}`;
+  const previewWhen  = `${selectedDay?.label ?? ""} · ${selectedTime?.label ?? ""}`;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+
+    const nameErr  = isNewService && !newSvcName.trim() ? "Service name is required" : undefined;
+    const timeErr  = validateTime(time);
+    const minsErr  = validateMins(mins);
+    const priceErr = validatePrice(price);
+
+    setNameError(nameErr);
+    setTimeError(timeErr);
+    setMinsError(minsErr);
+    setPriceError(priceErr);
+
+    if (nameErr || timeErr || minsErr || priceErr) return;
+
+    // Convert the stylist's local date+time to UTC before storing.
+    // `new Date("YYYY-MMT HH:MM")` is interpreted as local time by browsers.
+    const localDt = new Date(`${day}T${time}`);
+    const utcDate = localDt.toISOString().split("T")[0];
+    const utcTime = localDt.toISOString().split("T")[1].slice(0, 5);
+
     const formData = new FormData();
-    formData.set("service_name", chosen.name);
-    formData.set("slot_date", day);
-    formData.set("slot_time", time);
-    formData.set("duration_mins", String(mins));
-    formData.set("price", String(price));
-    formData.set("note", note);
+    formData.set("service_name",        isNewService ? newSvcName.trim() : chosen!.name);
+    formData.set("slot_date",           utcDate);
+    formData.set("slot_time",           utcTime);
+    formData.set("duration_mins",       String(mins));
+    formData.set("price",               String(price));
+    formData.set("note",                note);
+    formData.set("booking_cutoff_mins", cutoff);
+    if (isNewService) formData.set("save_as_service", "1");
 
     startTransition(async () => {
       try {
@@ -105,38 +168,16 @@ export default function CreateSlotForm({ services }: { services: ServiceOption[]
     });
   }
 
-  // ── Empty state ────────────────────────────────────────────────────────
-  if (services.length === 0) {
-    return (
-      <main className="min-h-screen bg-warm-cream">
-        <PageHeader className="gap-3">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="bg-transparent border-none cursor-pointer py-1 text-near-black text-xl leading-none flex items-center"
-            aria-label="Go back"
-          >
-            ←
-          </button>
-          <EyebrowLabel tone="muted">New opening</EyebrowLabel>
-        </PageHeader>
-        <div className="max-w-[540px] mx-auto px-6 pt-16 text-center">
-          <div className="text-[36px] mb-4" aria-hidden="true">✂️</div>
-          <h1 className="text-xl font-bold mb-2">No services yet</h1>
-          <p className="text-sm text-muted leading-relaxed mb-6 max-w-[300px] mx-auto">
-            Add at least one service to your profile before posting a slot.
-          </p>
-          <ButtonLink href="/dashboard/account" variant="primary" size="md">
-            Add services
-          </ButtonLink>
-        </div>
-      </main>
-    );
-  }
+  const serviceOptions = [
+    ...services.map((s, i) => ({
+      value: String(i),
+      label: `${s.name} — ${s.mins} min · $${s.price}`,
+    })),
+    { value: "__new__", label: "＋ Add new service" },
+  ];
 
   return (
     <main className="min-h-screen bg-warm-cream">
-      {/* Header */}
       <PageHeader className="gap-3">
         <button
           type="button"
@@ -149,7 +190,6 @@ export default function CreateSlotForm({ services }: { services: ServiceOption[]
         <EyebrowLabel tone="muted">New opening</EyebrowLabel>
       </PageHeader>
 
-      {/* Form */}
       <form onSubmit={handleSubmit} className="max-w-[540px] mx-auto px-6 pt-6 pb-[100px]">
         <h1 className="text-2xl font-bold mb-1.5">Post a slot</h1>
         <p className="text-sm text-muted mb-7 leading-relaxed">
@@ -157,17 +197,31 @@ export default function CreateSlotForm({ services }: { services: ServiceOption[]
         </p>
 
         {/* Service */}
-        <div className="mb-6">
+        <div className="mb-4">
           <Select
             label="Service"
-            value={String(svcIndex)}
-            onChange={(e) => pickService(Number(e.target.value))}
-            options={services.map((s, i) => ({
-              value: String(i),
-              label: `${s.name} — ${s.mins} min · $${s.price}`,
-            }))}
+            value={svcValue}
+            onChange={(e) => pickService(e.target.value)}
+            options={serviceOptions}
           />
         </div>
+
+        {/* Service name input — only when adding new */}
+        {isNewService && (
+          <div className="mb-6">
+            <Input
+              label="Service name"
+              value={newSvcName}
+              onChange={(e) => { setNewSvcName(e.target.value); setNameError(undefined); }}
+              onBlur={() => { if (!newSvcName.trim()) setNameError("Service name is required"); }}
+              placeholder="e.g. Color & cut"
+            />
+            <FormError message={nameError} className="mt-1" />
+          </div>
+        )}
+
+        {/* Spacing when existing service selected */}
+        {!isNewService && <div className="mb-2" />}
 
         {/* Day chips */}
         <div className="mb-6">
@@ -182,9 +236,19 @@ export default function CreateSlotForm({ services }: { services: ServiceOption[]
         </div>
 
         {/* Time + Length */}
-        <div className="flex gap-3 mb-6">
+        <div className="flex gap-3 mb-1.5">
           <div className="flex-1">
-            <Select label="Time" value={time} onChange={(e) => setTime(e.target.value)} options={TIME_OPTIONS} />
+            <Select
+              label="Time"
+              value={time}
+              onChange={(e) => { setTime(e.target.value); setTimeError(undefined); }}
+              onBlur={() => setTimeError(validateTime(time))}
+              options={[
+                { value: "", label: "Select time" },
+                ...TIME_OPTIONS,
+              ]}
+            />
+            <FormError message={timeError} className="mt-1" />
           </div>
           <div className="w-[130px]">
             <Input
@@ -194,13 +258,15 @@ export default function CreateSlotForm({ services }: { services: ServiceOption[]
               max={480}
               step={15}
               value={mins}
-              onChange={(e) => setMins(Number(e.target.value))}
+              onChange={(e) => { setMins(e.target.value); setMinsError(undefined); }}
+              onBlur={() => setMinsError(validateMins(mins))}
             />
+            <FormError message={minsError} className="mt-1" />
           </div>
         </div>
 
         {/* Price */}
-        <div className="mb-6">
+        <div className="mb-6 mt-4">
           <Input
             label="Price"
             type="number"
@@ -208,7 +274,20 @@ export default function CreateSlotForm({ services }: { services: ServiceOption[]
             step={5}
             prefix="$"
             value={price}
-            onChange={(e) => setPrice(Number(e.target.value))}
+            onChange={(e) => { setPrice(e.target.value); setPriceError(undefined); }}
+            onBlur={() => setPriceError(validatePrice(price))}
+          />
+          <FormError message={priceError} className="mt-1" />
+        </div>
+
+        {/* Booking cutoff */}
+        <div className="mb-6">
+          <Select
+            label="Booking cutoff"
+            value={cutoff}
+            onChange={(e) => setCutoff(e.target.value)}
+            options={CUTOFF_OPTIONS}
+            hint="Stop accepting bookings this far before the slot."
           />
         </div>
 
@@ -223,12 +302,12 @@ export default function CreateSlotForm({ services }: { services: ServiceOption[]
           />
         </div>
 
-        {/* Preview card */}
+        {/* Preview */}
         <div className="mb-7">
           <EyebrowLabel className="block mb-[10px]">Preview</EyebrowLabel>
           <div className="bg-near-black rounded-[22px] p-5 flex justify-between items-start">
             <div>
-              <div className="font-bold text-lg text-warm-cream mb-1.5">{chosen.name}</div>
+              <div className="font-bold text-lg text-warm-cream mb-1.5">{previewName}</div>
               <div className="text-[13px] text-stone mb-[3px]">{previewWhen}</div>
               <div className="text-[13px] text-stone">{mins} min</div>
             </div>
