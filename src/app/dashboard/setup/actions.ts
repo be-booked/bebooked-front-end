@@ -1,8 +1,9 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { sendAccountWelcome } from "@/lib/email/welcome";
 import { slugTaken, createStylist } from "@/lib/db/repositories/stylists";
 import { bulkInsertServices } from "@/lib/db/repositories/services";
 import { profileSchema, serviceDraftSchema, firstZodError } from "@/lib/schemas";
@@ -84,5 +85,26 @@ export async function saveSetup(formData: FormData, services: ServiceDraft[]) {
     )
   );
 
+  // Best-effort, and only now that there's a real slug to point at.
+  // Must run before redirect(), which throws by design.
+  await sendWelcome(userId, profile.name, slug);
+
   redirect("/dashboard");
+}
+
+async function sendWelcome(
+  clerkUserId: string,
+  name: string,
+  slug: string,
+): Promise<void> {
+  try {
+    const clerk = await clerkClient();
+    const user = await clerk.users.getUser(clerkUserId);
+    const email = user.primaryEmailAddress?.emailAddress;
+    if (!email) return;
+
+    await sendAccountWelcome(name, email, slug);
+  } catch (err) {
+    console.error("[setup] welcome email failed:", err);
+  }
 }

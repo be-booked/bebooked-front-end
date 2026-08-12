@@ -1,11 +1,44 @@
 import { Resend } from "resend";
 
+/** Display name every outbound email sends under. */
+const FROM_NAME = "BeBooked";
+
+/**
+ * Guarantees a branded display name. EMAIL_FROM may be set to a bare address
+ * (e.g. "hello@bebookedtoday.com"), which would otherwise surface in inboxes
+ * as the mailbox name rather than the brand.
+ */
+function withDisplayName(address: string): string {
+  const trimmed = address.trim();
+  return trimmed.includes("<") ? trimmed : `${FROM_NAME} <${trimmed}>`;
+}
+
 /**
  * Default sender. The domain must be verified in Resend or delivery fails
  * silently for every recipient except the account owner.
+ *
+ * Prefer a role address (hello@, notifications@) over a personal one —
+ * Gmail overrides the display name with the recipient's saved contact name,
+ * so mail from devan@ shows as "devan" to anyone who has her in contacts.
  */
-export const FROM_DEFAULT =
-  process.env.EMAIL_FROM ?? "BeBooked <hello@bebookedtoday.com>";
+export const FROM_DEFAULT = withDisplayName(
+  process.env.EMAIL_FROM ?? "hello@bebookedtoday.com",
+);
+
+/**
+ * Where replies to relationship emails (welcomes, updates) should land —
+ * a monitored human inbox, not the no-reply sender.
+ */
+export const REPLY_TO_HUMAN =
+  process.env.EMAIL_REPLY_TO ?? "devan@bebookedtoday.com";
+
+/**
+ * Where unsubscribe requests go until there's a real one-click endpoint.
+ * A mailto target is a valid List-Unsubscribe value per RFC 8058 and is
+ * honest about the current process (someone reads it and removes you).
+ */
+export const UNSUBSCRIBE_EMAIL =
+  process.env.EMAIL_UNSUBSCRIBE ?? REPLY_TO_HUMAN;
 
 export interface SendArgs {
   to: string;
@@ -14,6 +47,17 @@ export interface SendArgs {
   text: string;
   replyTo?: string;
   from?: string;
+  /**
+   * Marks this as bulk/relationship mail rather than transactional.
+   *
+   * Adds List-Unsubscribe headers, which Gmail and Outlook read as a signal
+   * that the sender is legitimate rather than evading filters — a meaningful
+   * deliverability win for a domain with no sending reputation yet.
+   *
+   * Leave false for transactional mail (booking confirmations). Those are
+   * responses to a user action and shouldn't be unsubscribable.
+   */
+  bulk?: boolean;
 }
 
 /**
@@ -30,23 +74,35 @@ export async function safeSend({
   html,
   text,
   replyTo,
-  from = FROM_DEFAULT,
+  from,
+  bulk = false,
 }: SendArgs): Promise<boolean> {
+  const sender = from ? withDisplayName(from) : FROM_DEFAULT;
+
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
     console.error("[email] RESEND_API_KEY is not set — skipping send:", subject);
     return false;
   }
 
+  // One-Click is only valid alongside an https target; with a mailto-only
+  // list we advertise the mailto and let the client render its own UI.
+  const headers = bulk
+    ? {
+        "List-Unsubscribe": `<mailto:${UNSUBSCRIBE_EMAIL}?subject=unsubscribe>`,
+      }
+    : undefined;
+
   try {
     const resend = new Resend(apiKey);
     const { error } = await resend.emails.send({
-      from,
+      from: sender,
       to,
       subject,
       html,
       text,
       ...(replyTo ? { replyTo } : {}),
+      ...(headers ? { headers } : {}),
     });
 
     if (error) {

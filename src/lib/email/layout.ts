@@ -55,12 +55,19 @@ export function esc(value: string): string {
     .replace(/"/g, "&quot;");
 }
 
-/** A label/value line inside the detail card. */
-export function detailRow(label: string, value: string): string {
+/**
+ * A label/value line inside the detail card.
+ * Pass `href` to make the value tappable (tel:, mailto:, https:).
+ */
+export function detailRow(label: string, value: string, href?: string): string {
+  const inner = href
+    ? `<a href="${esc(href)}" style="color:${SAGE};text-decoration:none;font-weight:500;">${esc(value)}</a>`
+    : esc(value);
+
   return `
     <div style="padding:11px 0;border-top:1px solid ${STONE};">
       <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:${MUTED};margin-bottom:3px;">${esc(label)}</div>
-      <div style="font-size:15px;color:${NEAR_BLACK};font-weight:500;">${esc(value)}</div>
+      <div style="font-size:15px;color:${NEAR_BLACK};font-weight:500;">${inner}</div>
     </div>`;
 }
 
@@ -73,6 +80,11 @@ export interface LayoutArgs {
   cta?: { label: string; url: string };
   /** Small print under the CTA. */
   footnote?: string;
+  /**
+   * Inbox preview line. Without it, clients scrape the first visible text —
+   * which is the wordmark and eyebrow, producing "BeBooked Slot filled ...".
+   */
+  preheader: string;
 }
 
 export function emailLayout({
@@ -81,11 +93,14 @@ export function emailLayout({
   body,
   cta,
   footnote,
+  preheader,
 }: LayoutArgs): string {
   return `<!doctype html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:${WARM_LINEN};font-family:${FONT};">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">${esc(preheader)}</div>
+  <div style="display:none;max-height:0;overflow:hidden;">&#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847; &#8199;&#65279;&#847;</div>
   <div style="max-width:520px;margin:0 auto;padding:32px 20px;">
 
     <div style="font-size:20px;color:${NEAR_BLACK};margin-bottom:24px;">
@@ -126,4 +141,28 @@ export function p(text: string): string {
 /** Bordered card wrapper for appointment details. */
 export function card(inner: string): string {
   return `<div style="background:${WARM_LINEN};padding:6px 18px 18px;margin-top:8px;">${inner}</div>`;
+}
+
+/**
+ * Checkmark list. Email clients render <ul> inconsistently, so each item is
+ * a block with the mark as a text glyph rather than a list marker.
+ */
+export function checkList(items: string[]): string {
+  return `<div style="margin:18px 0 0;">${items
+    .map(
+      (item) => `
+      <div style="font-size:15px;line-height:1.5;color:${NEAR_BLACK};margin-bottom:10px;">
+        <span style="color:${SAGE};font-weight:700;">&#10003;</span>&nbsp;&nbsp;${esc(item)}
+      </div>`,
+    )
+    .join("")}</div>`;
+}
+
+/** Emphasised block for a single important value, e.g. a booking link. */
+export function highlight(label: string, value: string, href: string): string {
+  return `
+    <div style="background:${WARM_LINEN};padding:18px;margin:20px 0;">
+      <div style="font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:${MUTED};margin-bottom:6px;">${esc(label)}</div>
+      <a href="${esc(href)}" style="font-size:17px;font-weight:700;color:${NEAR_BLACK};text-decoration:none;word-break:break-all;">${esc(value)}</a>
+    </div>`;
 }

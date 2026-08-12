@@ -2,8 +2,13 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { clerkClient } from "@clerk/nextjs/server";
 import { getSlotById, updateSlotStatus } from "@/lib/db/repositories/slots";
-import { createBooking } from "@/lib/db/repositories/bookings";
+import { createBooking, getBookingEmailData } from "@/lib/db/repositories/bookings";
+import {
+  sendBookingConfirmation,
+  sendNewBookingAlert,
+} from "@/lib/email/booking";
 import { bookingSchema, firstZodError } from "@/lib/schemas";
 import { wrapDb, parseDbError } from "@/lib/errors";
 
@@ -47,5 +52,36 @@ export async function bookSlot(
 
   await wrapDb(() => updateSlotStatus(slotId, "booked"));
 
+  // Notifications are best-effort — the booking is already committed, so a
+  // mail failure must never surface to the client or block the redirect.
+  // Must run before redirect(), which throws by design.
+  await sendBookingEmails(slotId);
+
   redirect(`/b/${shortCode}/confirmed`);
+}
+
+async function sendBookingEmails(slotId: number): Promise<void> {
+  try {
+    const row = await getBookingEmailData(slotId);
+    if (!row) return;
+
+    // stylists has no email column — Clerk holds the pro's address
+    let proEmail: string | null = null;
+    try {
+      const clerk = await clerkClient();
+      const user = await clerk.users.getUser(row.clerkUserId);
+      proEmail = user.primaryEmailAddress?.emailAddress ?? null;
+    } catch (err) {
+      console.error("[booking] could not resolve pro email from Clerk:", err);
+    }
+
+    const data = { ...row, proEmail };
+
+    await Promise.allSettled([
+      sendBookingConfirmation(data),
+      sendNewBookingAlert(data),
+    ]);
+  } catch (err) {
+    console.error("[booking] notification step failed:", err);
+  }
 }

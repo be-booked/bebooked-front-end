@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Resend } from "resend";
 import { neon } from "@neondatabase/serverless";
+import { safeSend } from "@/lib/email/client";
+import { sendWaitlistWelcome } from "@/lib/email/welcome";
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
@@ -11,34 +12,36 @@ export async function POST(req: NextRequest) {
   }
 
   const sql = neon(process.env.DATABASE_URL!);
-  const resend = new Resend(process.env.RESEND_API_KEY!);
 
+  // RETURNING yields no row when the email was already on the list, which is
+  // how we avoid re-welcoming (and re-notifying) a repeat submitter.
+  let isNewSignup = false;
   try {
-    await sql`
+    const rows = await sql`
       INSERT INTO waitlist (name, email)
       VALUES (${name}, ${email})
       ON CONFLICT (email) DO NOTHING
+      RETURNING id
     `;
+    isNewSignup = rows.length > 0;
   } catch (err) {
     console.error("DB error:", err);
     return NextResponse.json({ error: "Database error" }, { status: 500 });
   }
 
-  try {
-    const { error } = await resend.emails.send({
-      from: "BeBooked <onboarding@resend.dev>", // TODO: swap to noreply@bebookedtoday.com after domain verification
-      to: process.env.NOTIFY_EMAIL!,
-      subject: `New waitlist signup: ${name}`,
-      text: `${name} (${email}) joined the BeBooked waitlist.`,
-    });
-
-    if (error) {
-      console.error("Resend error:", error);
-      // DB insert succeeded — still return success to the user,
-      // but log so we know the notification didn't fire
-    }
-  } catch (err) {
-    console.error("Resend exception:", err);
+  // Best-effort — the signup is already saved, so neither send can fail the
+  // request. Run together so a slow send doesn't stack on the other.
+  if (isNewSignup) {
+    await Promise.allSettled([
+      sendWaitlistWelcome(name, email),
+      safeSend({
+        to: process.env.NOTIFY_EMAIL!,
+        subject: `New waitlist signup: ${name}`,
+        text: `${name} (${email}) joined the BeBooked waitlist.`,
+        html: `<p>${name} (${email}) joined the BeBooked waitlist.</p>`,
+        replyTo: email,
+      }),
+    ]);
   }
 
   return NextResponse.json({ success: true });

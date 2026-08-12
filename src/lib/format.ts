@@ -41,6 +41,14 @@ export function formatCityState(city?: string | null, state?: string | null): st
   return [city, state].filter(Boolean).join(", ");
 }
 
+/** "(704) 555-0118" — falls back to the raw value if it isn't 10 digits */
+export function formatPhone(phone?: string | null): string {
+  if (!phone) return "";
+  const d = phone.replace(/\D/g, "");
+  if (d.length !== 10) return phone;
+  return `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`;
+}
+
 export function formatPrice(priceCents: number): string {
   return `$${(priceCents / 100).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 }
