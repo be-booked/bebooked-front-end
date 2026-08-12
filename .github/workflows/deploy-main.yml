@@ -1,13 +1,13 @@
-name: Deploy to dev
+name: Deploy to production
 
 on:
   push:
     branches:
-      - dev
+      - main
 
 jobs:
   deploy:
-    name: Build & deploy (dev)
+    name: Build & deploy (production)
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -28,11 +28,9 @@ jobs:
         run: npm run build:worker
         env:
           # Public Clerk keys must be available at build time so Next.js can
-          # embed them in the client bundle.
-          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY_DEV }}
-          # Without this, APP_URL falls back to the production host at build
-          # time — dev booking links and emails would point at bebookedtoday.com.
-          NEXT_PUBLIC_APP_URL: https://dev.bebookedtoday.com
+          # embed them in the client bundle. Use the LIVE keys here.
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          NEXT_PUBLIC_APP_URL: https://bebookedtoday.com
           NEXT_PUBLIC_CLERK_SIGN_IN_URL: /sign-in
           NEXT_PUBLIC_CLERK_SIGN_UP_URL: /sign-up
           NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL: /dashboard
@@ -40,8 +38,8 @@ jobs:
           NEXT_PUBLIC_CLERK_SIGN_IN_FORCE_REDIRECT_URL: /dashboard
           NEXT_PUBLIC_CLERK_SIGN_UP_FORCE_REDIRECT_URL: /dashboard
 
-      - name: Deploy to Cloudflare Workers (dev)
-        run: npx wrangler deploy --env dev
+      - name: Deploy to Cloudflare Workers (production)
+        run: npx wrangler deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
