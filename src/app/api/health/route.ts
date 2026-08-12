@@ -5,6 +5,9 @@ import { waitlist, stylists, services, slots, bookings } from "@/lib/db/schema";
 
 export const runtime = "edge";
 
+// Never evaluate this at build time — it exists to probe a live database.
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const dbUrl = process.env.DATABASE_URL;
   const checks: Record<string, unknown> = {
