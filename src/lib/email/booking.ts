@@ -122,7 +122,7 @@ export async function sendBookingConfirmation(d: BookingEmailData): Promise<bool
 }
 
 /**
- * Alert to the pro that one of their open slots just filled.
+ * Alert to the pro that one of their open slots just filled .
  * Reply-to is the client so the pro can reach them in one tap.
  */
 export async function sendNewBookingAlert(d: BookingEmailData): Promise<boolean> {
