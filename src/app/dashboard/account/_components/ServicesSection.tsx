@@ -66,7 +66,6 @@ function ServiceForm({
         onBlur={() => setErrors((er) => ({ ...er, name: validateServiceName(name) }))}
         onKeyDown={(e) => e.key === "Enter" && handleSave()}
         error={errors.name}
-        // eslint-disable-next-line jsx-a11y/no-autofocus
         autoFocus={!initial}
       />
       <div className="flex gap-3">

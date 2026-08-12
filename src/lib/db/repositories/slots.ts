@@ -1,4 +1,4 @@
-import { eq, and, or, asc, desc, lt, gte, inArray, sql, count } from "drizzle-orm";
+import { eq, and, or, asc, desc, gte, inArray, sql, count } from "drizzle-orm";
 import { db } from "../client";
 import { slots, stylists, bookings } from "../schema";
 

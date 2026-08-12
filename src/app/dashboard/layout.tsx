@@ -1,18 +1,29 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { DashboardNav } from "./_components/DashboardNav";
+import { getStylistByClerkId } from "@/lib/db/repositories/stylists";
+import { AppBar } from "./_components/AppBar";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
 
+  // Non-blocking: if the DB is unreachable the AppBar still renders with
+  // empty identity rather than taking the whole dashboard down.
+  let stylist: Awaited<ReturnType<typeof getStylistByClerkId>> = undefined;
+  try {
+    stylist = await getStylistByClerkId(userId);
+  } catch {
+    // no-op
+  }
+
   return (
     <>
-      {/* Bottom nav height is ~60px + safe area — pb-24 gives comfortable clearance */}
-      <div className="pb-24">
-        {children}
-      </div>
-      <DashboardNav />
+      <AppBar
+        name={stylist?.name ?? ""}
+        slug={stylist?.slug ?? ""}
+        photoUrl={stylist?.photoUrl ?? null}
+      />
+      {children}
     </>
   );
 }

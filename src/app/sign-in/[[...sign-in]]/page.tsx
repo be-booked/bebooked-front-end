@@ -40,7 +40,7 @@ export default function SignInPage() {
         }}
       >
         <Wordmark size="md" />
-        <EyebrowLabel tone="muted">For stylists</EyebrowLabel>
+        <EyebrowLabel tone="muted">For beauty pros</EyebrowLabel>
       </div>
 
       <SignIn

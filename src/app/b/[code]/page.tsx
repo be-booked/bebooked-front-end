@@ -46,7 +46,7 @@ export default async function BookingPage({
             <div className="text-[36px] mb-4">⏰</div>
             <h1 className="text-[28px] font-bold mb-2">Booking window closed</h1>
             <p className="text-sm text-muted mb-6 leading-relaxed">
-              This stylist stopped accepting bookings for this slot. Check back for new openings.
+              Bookings closed for this slot. Check back for new openings.
             </p>
             <Link href={`/${row.slug}`} className="text-sm text-sage underline">
               See other openings

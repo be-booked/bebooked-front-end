@@ -58,7 +58,7 @@ export default async function ConfirmedPage({
               </div>
             </div>
 
-            <RecapRow icon="🌸" label="Service" value={row.serviceName} />
+            <RecapRow icon="✨" label="Service" value={row.serviceName} />
             <RecapRow icon="📅" label="When"    value={<LocalSlotTime utcDate={row.slotDate} utcTime={row.slotTime} />} />
             <RecapRow icon="⏱"  label="Length"  value={`${row.durationMins} min`} />
             {formatAddress(row.addressStreet, row.addressCity, row.addressState, row.addressZip) && (

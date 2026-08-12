@@ -38,7 +38,7 @@ export default function SignUpPage() {
         }}
       >
         <Wordmark size="md" />
-        <EyebrowLabel tone="muted">For stylists</EyebrowLabel>
+        <EyebrowLabel tone="muted">For beauty pros</EyebrowLabel>
       </div>
 
       <SignUp

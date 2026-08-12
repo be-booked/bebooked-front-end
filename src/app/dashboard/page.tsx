@@ -1,9 +1,8 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import Wordmark from "@/components/Wordmark";
+import { CalendarPlus } from "lucide-react";
 import { Button, ButtonLink, EyebrowLabel, Card } from "@/components/ui";
-import { PageHeader } from "@/components/PageHeader";
 import SlotCard, { type SlotCardData } from "./_components/SlotCard";
 import BookedSlotCard, { type BookedSlotCardData } from "./_components/BookedSlotCard";
 import { formatPrice, formatCityState } from "@/lib/format";
@@ -162,12 +161,7 @@ export default async function DashboardPage({
 
   return (
     <main className="min-h-screen bg-warm-cream">
-      {/* Header */}
-      <PageHeader className="justify-between">
-        <Wordmark size="sm" />
-      </PageHeader>
-
-      {/* Body */}
+      {/* Body — header comes from the dashboard layout's AppBar */}
       <div className="max-w-[680px] mx-auto px-6 pt-6 pb-16">
         {/* Title row */}
         <div className="flex justify-between items-end mb-1">
@@ -190,17 +184,10 @@ export default async function DashboardPage({
             : activeSubtitle}
         </p>
 
-        {/* Action row */}
-        <div className="flex gap-2.5 mb-5">
+        {/* Action row — public profile now lives in the account sheet */}
+        <div className="flex mb-5">
           <ButtonLink href="/dashboard/create" variant="primary" fullWidth>
-            + Create slot
-          </ButtonLink>
-          <ButtonLink
-            href={stylist?.slug ? `/${stylist.slug}` : "#"}
-            aria-label="View your public profile"
-            fullWidth
-          >
-            Profile
+            + Post a new slot
           </ButtonLink>
         </div>
 
@@ -346,10 +333,10 @@ function EmptyState({ dbError }: { dbError: boolean }) {
   return (
     <div className="text-center px-6 py-14 text-muted">
       <div
-        className="size-14 rounded-[12px] bg-stone mx-auto mb-5 flex items-center justify-center text-[22px]"
+        className="size-14 rounded-[12px] bg-stone mx-auto mb-5 flex items-center justify-center text-warm-gray"
         aria-hidden="true"
       >
-        🌸
+        <CalendarPlus size={24} strokeWidth={1.75} />
       </div>
       <p className="font-bold text-base text-near-black m-0 mb-2">No open slots yet</p>
       <p className="text-sm text-muted leading-relaxed max-w-[280px] mx-auto mb-6">

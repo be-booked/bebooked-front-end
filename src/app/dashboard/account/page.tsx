@@ -1,11 +1,8 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import Wordmark from "@/components/Wordmark";
-import { PageHeader } from "@/components/PageHeader";
 import ProfileForm from "./_components/ProfileForm";
 import PhotoUpload from "./_components/PhotoUpload";
 import ServicesSection from "./_components/ServicesSection";
-import { SignOutButton } from "./_components/SignOutButton";
 import { type ServiceRow } from "./actions";
 import { getStylistByClerkId } from "@/lib/db/repositories/stylists";
 import { getServicesByStylistId } from "@/lib/db/repositories/services";
@@ -38,10 +35,6 @@ export default async function AccountPage() {
 
   return (
     <main className="min-h-screen bg-warm-cream">
-      <PageHeader>
-        <Wordmark size="sm" />
-      </PageHeader>
-
       <div className="max-w-[540px] mx-auto px-6 pt-8 pb-10">
 
         {/* ── Profile ───────────────────────────────────────────────── */}
@@ -73,7 +66,7 @@ export default async function AccountPage() {
         <SectionDivider />
 
         {/* ── Services ─────────────────────────────────────────────── */}
-        <section>
+        <section id="services" className="scroll-mt-20">
           <div className="flex items-baseline justify-between mb-1">
             <h2 className="text-xl font-bold text-near-black">Services</h2>
             {services.length > 0 && (
@@ -86,17 +79,6 @@ export default async function AccountPage() {
             Your menu of offerings. These pre-fill slot details when you post a new opening.
           </p>
           <ServicesSection initial={services} />
-        </section>
-
-        <SectionDivider />
-
-        {/* ── Account ──────────────────────────────────────────────── */}
-        <section>
-          <h2 className="text-xl font-bold text-near-black mb-1">Account</h2>
-          <p className="text-sm text-muted mb-6 leading-relaxed">
-            Signing out will end your current session.
-          </p>
-          <SignOutButton />
         </section>
 
       </div>

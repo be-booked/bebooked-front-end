@@ -54,7 +54,6 @@ function AddServiceForm({ onAdd, onCancel }: { onAdd: (svc: ServiceDraft) => voi
         onBlur={() => setErrors((er) => ({ ...er, name: validateServiceName(name) }))}
         onKeyDown={(e) => e.key === "Enter" && submit()}
         error={errors.name}
-        // eslint-disable-next-line jsx-a11y/no-autofocus
         autoFocus
       />
       <div className="flex gap-3">

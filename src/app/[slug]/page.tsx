@@ -5,7 +5,8 @@ import { Calendar } from "lucide-react";
 import { Avatar, EyebrowLabel, Card, Button } from "@/components/ui";
 import { PoweredBy } from "@/components/PoweredBy";
 import { ShareProfileButton } from "./_components/ShareProfileButton";
-import { formatPrice, formatCityState } from "@/lib/format";
+import { AboutStylist } from "./_components/AboutStylist";
+import { formatPrice, formatCityState, formatAddress } from "@/lib/format";
 import { LocalSlotTime } from "@/components/LocalSlotTime";
 import { auth } from "@clerk/nextjs/server";
 import { getStylistBySlug } from "@/lib/db/repositories/stylists";
@@ -98,11 +99,21 @@ export default async function PublicProfilePage({
                 />
               </div>
               {meta && <div className="text-sm text-muted">{meta}</div>}
-              {stylist.bio && (
-                <p className="text-sm text-warm-gray mt-[10px] leading-relaxed max-w-[460px]">
-                  {stylist.bio}
-                </p>
-              )}
+              <AboutStylist
+                name={stylist.name}
+                meta={meta}
+                photoUrl={stylist.photoUrl}
+                bio={stylist.bio}
+                specialties={stylist.specialties ?? []}
+                address={formatAddress(
+                  stylist.addressStreet,
+                  stylist.addressCity,
+                  stylist.addressState,
+                  stylist.addressZip,
+                )}
+                cancellationPolicy={stylist.cancellationPolicy}
+                hasPhone={!!stylist.phone}
+              />
             </div>
           </div>
         </div>
