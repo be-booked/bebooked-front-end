@@ -1,4 +1,5 @@
 import React from "react";
+import { cn } from "@/lib/cn";
 
 type EyebrowTone = "default" | "muted" | "accent" | "onDark";
 
@@ -7,27 +8,27 @@ interface EyebrowLabelProps extends React.HTMLAttributes<HTMLElement> {
   as?: React.ElementType;
 }
 
-const tones: Record<EyebrowTone, string> = {
-  default: "var(--text-primary)",
-  muted:   "var(--text-muted)",
-  accent:  "var(--text-accent)",
-  onDark:  "var(--text-on-dark-dim)",
+const toneClasses: Record<EyebrowTone, string> = {
+  default: "text-near-black",
+  muted:   "text-muted",
+  accent:  "text-sage",
+  onDark:  "text-stone",
 };
 
-export function EyebrowLabel({ children, tone = "default", as: Tag = "span", className = "", style, ...rest }: EyebrowLabelProps) {
+export function EyebrowLabel({
+  children,
+  tone = "default",
+  as: Tag = "span",
+  className,
+  ...rest
+}: EyebrowLabelProps) {
   return (
     <Tag
-      className={className}
-      style={{
-        fontFamily:    "var(--font-sans)",
-        fontSize:      "12px",
-        fontWeight:    "var(--weight-regular)",
-        letterSpacing: "var(--tracking-wider)",
-        textTransform: "uppercase",
-        color:         tones[tone] ?? tones.default,
-        display:       "inline-block",
-        ...style,
-      }}
+      className={cn(
+        "text-xs font-normal tracking-[0.12em] uppercase inline-block",
+        toneClasses[tone],
+        className,
+      )}
       {...rest}
     >
       {children}

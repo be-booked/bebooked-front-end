@@ -25,13 +25,32 @@ export const metadata: Metadata = {
   },
 };
 
+const clerkLocalization = {
+  signIn: {
+    start: {
+      title: "Welcome back",
+      subtitle: "Sign in to manage your slots.",
+      actionText: "New to Bebooked?",
+      actionLink: "Create your profile",
+    },
+  },
+  signUp: {
+    start: {
+      title: "Create your profile",
+      subtitle: "Start filling last-minute openings.",
+      actionText: "Already have an account?",
+      actionLink: "Sign in",
+    },
+  },
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider localization={clerkLocalization}>
       <html lang="en" className={jost.variable}>
         <body className="min-h-screen">{children}</body>
       </html>

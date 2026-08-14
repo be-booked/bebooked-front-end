@@ -1,4 +1,5 @@
 export { Button }       from "./Button";
+export { ButtonLink }   from "./ButtonLink";
 export { Card }         from "./Card";
 export { Input }        from "./Input";
 export { Textarea }     from "./Textarea";
@@ -7,3 +8,4 @@ export { EyebrowLabel } from "./EyebrowLabel";
 export { IconButton }   from "./IconButton";
 export { Badge }        from "./Badge";
 export { Avatar }       from "./Avatar";
+export { FormError }    from "./FormError";

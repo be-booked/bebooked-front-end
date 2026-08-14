@@ -1,6 +1,5 @@
-"use client";
-
 import React from "react";
+import { cn } from "@/lib/cn";
 
 type IconButtonVariant = "primary" | "secondary" | "accent" | "ghost";
 type IconButtonSize = "sm" | "md" | "lg";
@@ -10,16 +9,20 @@ interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> 
   variant?: IconButtonVariant;
   size?: IconButtonSize;
   shape?: IconButtonShape;
-  label: string; // required for accessibility
+  label: string; // required for a11y
 }
 
-const dims: Record<IconButtonSize, number> = { sm: 34, md: 42, lg: 50 };
+const sizeClasses: Record<IconButtonSize, string> = {
+  sm: "size-[34px]",
+  md: "size-[42px]",
+  lg: "size-[50px]",
+};
 
-const variants: Record<IconButtonVariant, React.CSSProperties> = {
-  primary:   { background: "var(--cta-bg)",    color: "var(--cta-text)",    border: "var(--border-regular) solid var(--cta-bg)" },
-  accent:    { background: "var(--accent-bg)", color: "var(--accent-text)", border: "var(--border-regular) solid var(--accent-bg)" },
-  secondary: { background: "transparent",      color: "var(--text-primary)", border: "var(--border-regular) solid var(--border-default)" },
-  ghost:     { background: "transparent",      color: "var(--text-primary)", border: "var(--border-regular) solid transparent" },
+const variantClasses: Record<IconButtonVariant, string> = {
+  primary:   "bg-near-black text-warm-cream border-regular border-near-black",
+  accent:    "bg-sage text-warm-cream border-regular border-sage",
+  secondary: "bg-transparent text-near-black border-regular border-stone",
+  ghost:     "bg-transparent text-near-black border-regular border-transparent",
 };
 
 export function IconButton({
@@ -29,34 +32,23 @@ export function IconButton({
   shape = "square",
   disabled = false,
   label,
-  className = "",
-  style,
+  className,
   ...rest
 }: IconButtonProps) {
-  const d = dims[size];
-  const v = variants[variant];
-
   return (
     <button
       type="button"
       aria-label={label}
       disabled={disabled}
-      className={className}
-      style={{
-        display:        "inline-flex",
-        alignItems:     "center",
-        justifyContent: "center",
-        width:          d,
-        height:         d,
-        borderRadius:   shape === "round" ? "var(--radius-pill)" : "var(--radius-none)",
-        cursor:         disabled ? "not-allowed" : "pointer",
-        opacity:        disabled ? 0.45 : 1,
-        transition:     "opacity var(--dur-normal) var(--ease-standard)",
-        ...v,
-        ...style,
-      }}
-      onMouseEnter={(e) => { if (!disabled) e.currentTarget.style.opacity = String(0.82); }}
-      onMouseLeave={(e) => { if (!disabled) e.currentTarget.style.opacity = "1"; }}
+      className={cn(
+        "inline-flex items-center justify-center",
+        "transition-opacity duration-200",
+        "hover:opacity-80 disabled:opacity-45 disabled:cursor-not-allowed disabled:hover:opacity-45",
+        shape === "round" ? "rounded-full" : "",
+        sizeClasses[size],
+        variantClasses[variant],
+        className,
+      )}
       {...rest}
     >
       {children}

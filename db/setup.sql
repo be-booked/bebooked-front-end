@@ -49,7 +49,10 @@ CREATE INDEX IF NOT EXISTS services_stylist_idx ON services (stylist_id);
 -- ── Slots ─────────────────────────────────────────────────────
 -- A last-minute opening posted by a stylist.
 -- short_code is the unique shareable identifier (e.g. "k2x").
-CREATE TYPE IF NOT EXISTS slot_status AS ENUM ('open', 'booked', 'cancelled');
+DO $$ BEGIN
+  CREATE TYPE slot_status AS ENUM ('open', 'booked', 'cancelled');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 CREATE TABLE IF NOT EXISTS slots (
   id            SERIAL      PRIMARY KEY,

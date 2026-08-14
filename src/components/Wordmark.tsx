@@ -1,6 +1,7 @@
 import React from "react";
+import { cn } from "@/lib/cn";
 
-type WordmarkSize = "sm" | "md" | "lg" | "xl";
+type WordmarkSize = "xs" | "sm" | "md" | "lg" | "xl";
 type WordmarkTone = "dark" | "light";
 
 interface WordmarkProps extends React.HTMLAttributes<HTMLElement> {
@@ -10,32 +11,38 @@ interface WordmarkProps extends React.HTMLAttributes<HTMLElement> {
 }
 
 const sizeMap: Record<WordmarkSize, string> = {
+  xs: "14px",
   sm: "22px",
   md: "32px",
   lg: "56px",
   xl: "80px",
 };
 
-export default function Wordmark({ size = "md", tone = "dark", as: Tag = "span", className = "", style, ...rest }: WordmarkProps) {
-  const color = tone === "light" ? "var(--text-on-dark)" : "var(--text-primary)";
+const toneClass: Record<WordmarkTone, string> = {
+  dark:  "text-near-black",
+  light: "text-warm-cream",
+};
 
+export default function Wordmark({
+  size = "md",
+  tone = "dark",
+  as: Tag = "span",
+  className,
+  style,
+  ...rest
+}: WordmarkProps) {
   return (
     <Tag
-      className={className}
-      style={{
-        fontFamily:    "var(--font-sans)",
-        fontSize:      sizeMap[size],
-        lineHeight:    1,
-        letterSpacing: "var(--tracking-tight)",
-        color,
-        whiteSpace:    "nowrap",
-        display:       "inline-block",
-        ...style,
-      }}
+      className={cn(
+        "tracking-[-0.02em] whitespace-nowrap inline-block leading-none",
+        toneClass[tone],
+        className,
+      )}
+      style={{ fontSize: sizeMap[size], ...style }}
       {...rest}
     >
-      <span style={{ fontWeight: "var(--weight-bold)" }}>Be</span>
-      <span style={{ fontWeight: "var(--weight-light)" }}>Booked</span>
+      <span className="font-bold">Be</span>
+      <span className="font-light">Booked</span>
     </Tag>
   );
 }

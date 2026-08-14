@@ -1,6 +1,5 @@
-"use client";
-
 import React from "react";
+import { cn } from "@/lib/cn";
 
 type ButtonVariant = "primary" | "secondary" | "accent" | "ghost";
 type ButtonSize = "sm" | "md" | "lg";
@@ -13,17 +12,17 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   trailingIcon?: React.ReactNode;
 }
 
-const sizes: Record<ButtonSize, { padding: string; font: string; tracking: string }> = {
-  sm: { padding: "9px 16px",  font: "13px", tracking: "0.06em" },
-  md: { padding: "13px 24px", font: "15px", tracking: "0.04em" },
-  lg: { padding: "17px 32px", font: "16px", tracking: "0.04em" },
+const sizeClasses: Record<ButtonSize, string> = {
+  sm: "px-4 py-[9px] text-[13px] tracking-[0.06em]",
+  md: "px-6 py-[13px] text-[15px] tracking-[0.04em]",
+  lg: "px-8 py-[17px] text-base tracking-[0.04em]",
 };
 
-const variants: Record<ButtonVariant, React.CSSProperties> = {
-  primary:   { background: "var(--cta-bg)",    color: "var(--cta-text)",    border: "var(--border-regular) solid var(--cta-bg)" },
-  accent:    { background: "var(--accent-bg)", color: "var(--accent-text)", border: "var(--border-regular) solid var(--accent-bg)" },
-  secondary: { background: "transparent",      color: "var(--text-primary)", border: "var(--border-regular) solid var(--border-default)" },
-  ghost:     { background: "transparent",      color: "var(--text-primary)", border: "var(--border-regular) solid transparent" },
+const variantClasses: Record<ButtonVariant, string> = {
+  primary:   "bg-near-black text-warm-cream border-regular border-near-black",
+  accent:    "bg-sage text-warm-cream border-regular border-sage",
+  secondary: "bg-transparent text-near-black border-regular border-stone",
+  ghost:     "bg-transparent text-near-black border-regular border-transparent",
 };
 
 export function Button({
@@ -35,40 +34,22 @@ export function Button({
   type = "button",
   leadingIcon,
   trailingIcon,
-  className = "",
-  style,
+  className,
   ...rest
 }: ButtonProps) {
-  const s = sizes[size];
-  const v = variants[variant];
-
   return (
     <button
       type={type}
       disabled={disabled}
-      className={className}
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "8px",
-        width: fullWidth ? "100%" : "auto",
-        padding: s.padding,
-        fontFamily: "var(--font-sans)",
-        fontSize: s.font,
-        fontWeight: "var(--weight-bold)",
-        letterSpacing: s.tracking,
-        lineHeight: 1,
-        whiteSpace: "nowrap",
-        borderRadius: "var(--radius-none)",
-        cursor: disabled ? "not-allowed" : "pointer",
-        opacity: disabled ? 0.45 : 1,
-        transition: "opacity var(--dur-normal) var(--ease-standard), background var(--dur-normal) var(--ease-standard)",
-        ...v,
-        ...style,
-      }}
-      onMouseEnter={(e) => { if (!disabled) e.currentTarget.style.opacity = String(0.82); }}
-      onMouseLeave={(e) => { if (!disabled) e.currentTarget.style.opacity = "1"; }}
+      className={cn(
+        "inline-flex items-center justify-center gap-2 leading-none whitespace-nowrap font-bold",
+        "transition-opacity duration-200",
+        "hover:opacity-80 disabled:opacity-45 disabled:cursor-not-allowed disabled:hover:opacity-45",
+        fullWidth && "w-full",
+        sizeClasses[size],
+        variantClasses[variant],
+        className,
+      )}
       {...rest}
     >
       {leadingIcon}

@@ -40,20 +40,11 @@ export default function SignInPage() {
         }}
       >
         <Wordmark size="md" />
-        <EyebrowLabel tone="muted">For stylists</EyebrowLabel>
+        <EyebrowLabel tone="muted">For beauty pros</EyebrowLabel>
       </div>
 
       <SignIn
-        localization={{
-          signIn: {
-            start: {
-              title: "Welcome back",
-              subtitle: "Sign in to manage your slots.",
-              actionText: "New to Bebooked?",
-              actionLink: "Create your profile",
-            },
-          },
-        }}
+        forceRedirectUrl="/dashboard"
         appearance={{
           variables: {
             colorPrimary:                 brand.nearBlack,
